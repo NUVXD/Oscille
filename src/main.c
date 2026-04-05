@@ -1,4 +1,3 @@
-#include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,19 +24,72 @@ int main(void)
     appState *state = (appState *)calloc(1, sizeof(appState));
     if (!state)
     {
-        SDL_Log("Failed to allocate appState");
+        SDL_Log("failed to allocate appState\n");
         return 2;
     }
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
     {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+        SDL_Log("unable to initialize SDL: %s\n", SDL_GetError());
         free(state);
         return 2;
     }
     if (appInit(state) != 0) // 0 here is correctly initialized
     {
-        SDL_Log("Renderer initialization failed");
+        SDL_Log("renderer initialization failed\n");
         appClose(state);
+        return 2;
+    }
+
+    HEADER header = {0};
+    uint8_t *wavBuffer = (void *)0;
+    if (!parseWAV(&header, &wavBuffer))
+    {
+        SDL_Log("error with parsing WAV file\n");
+        appClose(state);
+        return 2;
+    }
+    printf("%zu BYTES\n", header.Riff.fileSize);
+    printf("MAIN CHUNK | RiffID: %s | fileFormatID: %s\n", header.Riff.ID, header.Riff.fileFormatID);
+    printf("SUBCHUNK 1 | FormatID: %s | BitsPerSample: %u | Frequency: %u | BytesPerSec: %u\n", header.Format.ID, header.Format.bitsPerSample, header.Format.frequency, header.Format.bytesPerSec);
+
+    SDL_AudioSpec audioSpec = {0};
+
+    switch (header.Format.bitsPerSample)
+    {
+    case 16:
+        audioSpec.format = SDL_AUDIO_S16;
+        break;
+    case 32:
+        audioSpec.format = SDL_AUDIO_S32;
+        break;
+    default:
+        SDL_Log("unsupported BitsPerSample\n");
+        appClose(state);
+        return 2;
+    }
+    audioSpec.channels = (int)header.Format.channelsNumber;
+    audioSpec.freq = (int)header.Format.frequency;
+    state->audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, NULL, NULL);
+
+    if (!state->audioStream)
+    {
+        SDL_Log("Unable to open audio stream: %s\n", SDL_GetError());
+        appClose(state);
+        free(wavBuffer);
+        return 2;
+    }
+    if (!SDL_PutAudioStreamData(state->audioStream, wavBuffer + header.Data.dataStart, (int)header.Data.size))
+    {
+        SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());
+        appClose(state);
+        free(wavBuffer);
+        return 2;
+    }
+    if (!SDL_ResumeAudioStreamDevice(state->audioStream))
+    {
+        SDL_Log("unable to start audio playback: %s\n", SDL_GetError());
+        appClose(state);
+        free(wavBuffer);
         return 2;
     }
 
@@ -47,20 +99,23 @@ int main(void)
     _Bool running = 1;
     while (running)
     {
-        // Events Call
-        //
+        // [Events Call]
+
         SDL_Event event;
         while (SDL_PollEvent(&event))
             if (appEvents(state, &event))
                 running = 0;
 
-        // Every Frame - Graphics
-        //
+        // [Every Frame - Graphics]
+
         if (state->height <= 0)
             state->height = 1;
-        //
-        doWave(state);
-        
+
+        if (!doWave(state, header, wavBuffer))
+        {
+            appClose(state);
+            return 2;
+        }
     }
 
     appClose(state);
@@ -69,6 +124,7 @@ int main(void)
 
 static int appInit(appState *state)
 {
+    // create window & renderer
     SDL_CreateWindowAndRenderer(
         windowTitle,
         windowInitialW,
@@ -77,19 +133,24 @@ static int appInit(appState *state)
         &state->window,
         &state->renderer);
 
+    // initialize window
     if (!state->window)
     {
-        SDL_Log("Couldn't create Window: %s", SDL_GetError());
+        SDL_Log("couldn't create Window: %s\n", SDL_GetError());
         return 2;
     }
+
+    // initialize renderer
     if (!state->renderer)
     {
-        SDL_Log("Couldn't create Renderer: %s", SDL_GetError());
+        SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
-    SDL_GetWindowSize(state->window, &state->width, &state->height);
 
-    parseWAV();
+    if (!SDL_SetRenderVSync(state->renderer, 1))
+        SDL_Log("couldn't enable VSync: %s\n", SDL_GetError());
+
+    SDL_GetWindowSize(state->window, &state->width, &state->height);
 
     return 0;
 }
@@ -114,6 +175,8 @@ static int appClose(appState *state)
 {
     if (state)
     {
+        if (state->audioStream)
+            SDL_DestroyAudioStream(state->audioStream);
         if (state->window)
             SDL_DestroyWindow(state->window);
         if (state->renderer)

@@ -2,18 +2,14 @@
 #define WAVE_H
 
 #include "appstate.h"
+#include "wav.h"
 
 typedef struct
 {
-    int hz;
-    float amplitude;
-    float phase;
-    float time;
-    float step;
-    int pointCount;
+    uint32_t pointCount;
     SDL_FPoint *points;
 } Wave;
 
-int doWave(appState *state);
+extern int doWave(appState *state, HEADER header, uint8_t *wavBuffer);
 
 #endif
