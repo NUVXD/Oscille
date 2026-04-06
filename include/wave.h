@@ -4,8 +4,7 @@
 #include "appstate.h"
 #include "wav.h"
 
-typedef struct
-{
+typedef struct {
     uint32_t pointCount;
     SDL_FPoint *points;
 } Wave;

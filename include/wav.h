@@ -1,18 +1,15 @@
 #ifndef WAV_H
 #define WAV_H
 
-typedef struct
-{
+typedef struct {
     // RIFF (MAIN) CHUNK
-    struct
-    {
+    struct {
         char ID[5]; // big endian
         size_t fileSize;
         char fileFormatID[5]; // big endian
     } Riff;
     // FORMAT CHUNK
-    struct
-    {
+    struct {
         char ID[5]; // big endian
         uint32_t size;
         /**
@@ -32,8 +29,7 @@ typedef struct
         uint16_t bitsPerSample;
     } Format;
     // DATA CHUNK
-    struct
-    {
+    struct {
         char ID[5]; // big endian
         uint32_t size;
         size_t dataStart;

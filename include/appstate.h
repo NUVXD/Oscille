@@ -5,8 +5,7 @@
 
 // APPSTATE STRUCT
 // - owns all persistent runtime state.
-typedef struct
-{
+typedef struct {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_AudioStream *audioStream;
