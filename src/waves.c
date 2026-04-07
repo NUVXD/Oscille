@@ -5,7 +5,7 @@
 #include "appstate.h"
 
 // TODO
-// - lower resolution of wave function as opposed to clamp/cap total points drawn
+// - lower resolution of wave function as opposed to clamp/cap total points drawn <- big issue, ignoring for now
 
 #define _2PI (2 * SDL_PI_F)
 #define SCALE 90U // hard-coded for now, TODO as option (error case if < 0)
@@ -57,6 +57,8 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         return 1;
     }
 
+    uint16_t sampleBytes = header.Format.bitsPerSample / 8;
+
     /*************************
     /     POINT BY WAV       /
     *************************/
@@ -72,17 +74,17 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         switch (header.Format.bitsPerSample) {
             case 16:
                 leftSample = (int16_t)read16Bit(&wavBuffer[sampleOffset]);
-                rightSample = (int16_t)read16Bit(&wavBuffer[sampleOffset + 2]);
+                rightSample = (int16_t)read16Bit(&wavBuffer[sampleOffset + sampleBytes]);
                 // normalizes 0-1 for SCALE
-                leftAmp = (float)leftSample / 32768.0f;
-                rightAmp = (float)rightSample / 32768.0f;
+                leftAmp = (float)leftSample / powf(2, 15);
+                rightAmp = (float)rightSample / powf(2, 15);
                 break;
             case 32:
                 leftSample = (int32_t)read32Bit(&wavBuffer[sampleOffset]);
-                rightSample = (int32_t)read32Bit(&wavBuffer[sampleOffset + 2]);
+                rightSample = (int32_t)read32Bit(&wavBuffer[sampleOffset + sampleBytes]);
                 // normalizes 0-1 for SCALE
-                leftAmp = (float)leftSample / 2147483648.0f;
-                rightAmp = (float)rightSample / 2147483648.0f;
+                leftAmp = (float)leftSample / powf(2, 31);
+                rightAmp = (float)rightSample / powf(2, 31);
                 break;
             default:
                 return 1;

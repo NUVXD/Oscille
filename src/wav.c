@@ -5,8 +5,7 @@
 #include "SDL3/SDL.h"
 #include "wav.h"
 
-#define TEMP_FILE_PATH "C:/Users/super/Desktop/Progetti/Oscille/temp/badapple.wav"
-
+#define MAX_FP_LEN 400U
 // http://soundfile.sapp.org/doc/WaveFormat/
 
 static uint16_t read16Bit(const uint8_t *buffer) { return (uint16_t)(buffer[0] | ((uint16_t)buffer[1] << 8)); }
@@ -75,7 +74,12 @@ static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header
 static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
     _Bool isError;
     size_t fileBytes = 0;
-    *wavFile = fopen(TEMP_FILE_PATH, "rb");
+
+    char filePath[MAX_FP_LEN];
+    printf("Input a WAV file:\n");
+    scanf_s("%s", filePath);
+    
+    *wavFile = fopen(filePath, "rb");
     if (!*wavFile) {
         SDL_Log("unable to open WAV file\n");
         return 1;
