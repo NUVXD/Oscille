@@ -42,9 +42,9 @@ static _Bool whatFrame(appState state, HEADER header, size_t *startFrame, size_t
 static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavBuffer) {
     _Bool isError;
 
-    // origins to center of screen
-    int originX = state.width / 2;  // screen-width (x) center
-    int originY = state.height / 2; // screen-height (y) center
+    // origins to center of scope canvas
+    int originX = state.canvas.width / 2;  // canvas-width (x) center
+    int originY = state.canvas.height / 2; // canvas-height (y) center
 
     // the amount of the window's HEIGHT that the scope occupies, in percentage
     //uint8_t SCALE = 90; // hard-coded for now, TODO as option (error case if < 0)
@@ -70,7 +70,6 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         int32_t rightSample;
         float leftAmp;
         float rightAmp;
-
         switch (header.Format.bitsPerSample) {
             case 16:
                 leftSample = (int16_t)read16Bit(&wavBuffer[sampleOffset]);
@@ -109,14 +108,6 @@ static int initWave(Wave *wave, HEADER header) {
     return 0;
 }
 
-static void drawWave(Wave wave, appState *state) {
-    SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
-    SDL_RenderClear(state->renderer);
-    SDL_SetRenderDrawColor(state->renderer, 74, 246, 38, 255); // green
-    SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
-    SDL_RenderPresent(state->renderer);
-}
-
 int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     Wave wave;
     _Bool isError;
@@ -129,8 +120,38 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     if (isError)
         return 1;
 
-    drawWave(wave, state);
+    // draw points
+    SDL_SetRenderDrawColor(state->renderer, 74, 246, 38, 255); // green
+    SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
+
     SDL_free(wave.points);
+
+    return 0;
+}
+
+int doCanvas(appState *state) {
+    state->canvas.height = state->height;
+    state->canvas.width = (state->width * 3 / 4);
+
+    state->canvas.LTop.x = 0.f;
+    state->canvas.LTop.y = 0.f;
+
+    state->canvas.LBottom.x = 0.f;
+    state->canvas.LBottom.y = (float)state->canvas.height;
+
+    state->canvas.RTop.x = (float)state->canvas.width;
+    state->canvas.RTop.y = 0.f;
+
+    state->canvas.RBottom.x = (float)state->canvas.width;
+    state->canvas.RBottom.y = (float)state->canvas.height;
+
+    float topx = state->canvas.RTop.x;
+    float topy = state->canvas.RTop.y;
+    float btmx = state->canvas.RBottom.x;
+    float btmy = state->canvas.RBottom.y;
+
+    SDL_SetRenderDrawColor(state->renderer, 74, 246, 38, 255); // green
+    SDL_RenderLine(state->renderer, topx, topy, btmx, btmy);
 
     return 0;
 }

@@ -78,7 +78,7 @@ static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
     char filePath[MAX_FP_LEN];
     printf("Input a WAV file:\n");
     scanf_s("%s", filePath);
-    
+
     *wavFile = fopen(filePath, "rb");
     if (!*wavFile) {
         SDL_Log("unable to open WAV file\n");
@@ -98,8 +98,10 @@ static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
         SDL_Log("unable to read complete WAV file\n");
         fclose(*wavFile);
         *wavFile = (void *)0;
-        free(*buffer);
-        *buffer = (void *)0;
+        if (*buffer) {
+            free(*buffer);
+            *buffer = (void *)0;
+        }
         return 1;
     }
     if (fclose(*wavFile) != 0) {
@@ -109,7 +111,7 @@ static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
     *wavFile = (void *)0;
 
     isError = parseHeader(*buffer, fileBytes, header);
-    if (isError) {
+    if (isError && *buffer) {
         free(*buffer);
         *buffer = (void *)0;
         return 1;

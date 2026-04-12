@@ -10,5 +10,6 @@ typedef struct {
 } Wave;
 
 extern int doWave(appState *state, HEADER header, uint8_t *wavBuffer);
+extern int doCanvas(appState *state);
 
 #endif

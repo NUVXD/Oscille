@@ -8,9 +8,9 @@
 #include "wave.h"
 #include "wav.h"
 
-#define windowTitle "Hello World! :3"
-#define windowInitialW 800
-#define windowInitialH 600
+#define WINDOW_TITLE "Hello World! :3"
+#define WINDOW_INIT_W 1000
+#define WINDOW_INIT_H 600
 
 static int appInit(appState *state);
 static int appEvents(appState *state, SDL_Event *event);
@@ -32,7 +32,7 @@ int main(void) {
     }
     if (appInit(state) != 0) // 0 here is correctly initialized
     {
-        SDL_Log("renderer initialization failed\n");
+        SDL_Log("app initialization failed\n");
         appClose(state);
         return 2;
     }
@@ -70,7 +70,6 @@ int main(void) {
     printf("SUBCHUNK 1 | FormatID: %s | BitsPerSample: %u | Frequency: %u | BytesPerSec: %u\n", header.Format.ID, header.Format.bitsPerSample, header.Format.frequency, header.Format.bytesPerSec);
 
     SDL_AudioSpec audioSpec = { 0 };
-
     switch (header.Format.bitsPerSample) {
         case 16:
             audioSpec.format = SDL_AUDIO_S16;
@@ -88,20 +87,23 @@ int main(void) {
     state->audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, NULL, NULL);
 
     if (!state->audioStream) {
-        SDL_Log("Unable to open audio stream: %s\n", SDL_GetError());
+        SDL_Log("unable to open audio stream: %s\n", SDL_GetError());
         appClose(state);
+        if (wavBuffer)
         free(wavBuffer);
         return 2;
     }
     if (!SDL_PutAudioStreamData(state->audioStream, wavBuffer + header.Data.dataStart, (int)header.Data.size)) {
         SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());
         appClose(state);
+        if (wavBuffer)
         free(wavBuffer);
         return 2;
     }
     if (!SDL_ResumeAudioStreamDevice(state->audioStream)) {
         SDL_Log("unable to start audio playback: %s\n", SDL_GetError());
         appClose(state);
+        if (wavBuffer)
         free(wavBuffer);
         return 2;
     }
@@ -120,14 +122,25 @@ int main(void) {
 
         // [Every Frame - Graphics]
 
-        if (state->height <= 0)
+        if (state->height <= 0) {
             state->height = 1;
+        }
+
+        // DRAW
+        SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
+        SDL_RenderClear(state->renderer);
+
+        doCanvas(state); // draws scope canvas
+
 
         isError = doWave(state, header, wavBuffer);
         if (isError) {
             appClose(state);
             return 2;
         }
+
+        SDL_RenderPresent(state->renderer);
+        //
     }
 
     appClose(state);
@@ -137,25 +150,24 @@ int main(void) {
 static int appInit(appState *state) {
     // create window & renderer
     SDL_CreateWindowAndRenderer(
-        windowTitle,
-        windowInitialW,
-        windowInitialH,
+        WINDOW_TITLE,
+        WINDOW_INIT_W,
+        WINDOW_INIT_H,
         SDL_WINDOW_RESIZABLE,
         &state->window,
         &state->renderer);
-
-    // initialize window
+    // check window
     if (!state->window) {
         SDL_Log("couldn't create Window: %s\n", SDL_GetError());
         return 2;
     }
-
-    // initialize renderer
+    // check renderer
     if (!state->renderer) {
         SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
 
+    // VSYNC
     if (!SDL_SetRenderVSync(state->renderer, 1))
         SDL_Log("couldn't enable VSync: %s\n", SDL_GetError());
 
@@ -182,12 +194,15 @@ static int appClose(appState *state) {
     if (state) {
         if (state->audioStream)
             SDL_DestroyAudioStream(state->audioStream);
+
         if (state->window)
             SDL_DestroyWindow(state->window);
         if (state->renderer)
             SDL_DestroyRenderer(state->renderer);
+
         free(state);
     }
+
     SDL_Quit();
     return 0;
 }
