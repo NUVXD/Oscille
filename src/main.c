@@ -6,7 +6,7 @@
 #include "SDL3/SDL.h"
 #include "main.h"
 
-#define WINDOW_TITLE "Hello World! :3"
+#define WINDOW_TITLE "Oscille"
 #define WINDOW_INIT_W 900
 #define WINDOW_INIT_H 600
 
