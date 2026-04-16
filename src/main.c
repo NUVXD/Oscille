@@ -4,12 +4,10 @@
 #include <math.h>
 #include <time.h>
 #include "SDL3/SDL.h"
-#include "appstate.h"
-#include "wave.h"
-#include "wav.h"
+#include "main.h"
 
 #define WINDOW_TITLE "Hello World! :3"
-#define WINDOW_INIT_W 1000
+#define WINDOW_INIT_W 900
 #define WINDOW_INIT_H 600
 
 static int appInit(appState *state);
@@ -90,21 +88,21 @@ int main(void) {
         SDL_Log("unable to open audio stream: %s\n", SDL_GetError());
         appClose(state);
         if (wavBuffer)
-        free(wavBuffer);
+            free(wavBuffer);
         return 2;
     }
     if (!SDL_PutAudioStreamData(state->audioStream, wavBuffer + header.Data.dataStart, (int)header.Data.size)) {
         SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());
         appClose(state);
         if (wavBuffer)
-        free(wavBuffer);
+            free(wavBuffer);
         return 2;
     }
     if (!SDL_ResumeAudioStreamDevice(state->audioStream)) {
         SDL_Log("unable to start audio playback: %s\n", SDL_GetError());
         appClose(state);
         if (wavBuffer)
-        free(wavBuffer);
+            free(wavBuffer);
         return 2;
     }
 
@@ -114,7 +112,6 @@ int main(void) {
     _Bool running = 1;
     while (running) {
         // [Events Call]
-
         SDL_Event event;
         while (SDL_PollEvent(&event))
             if (appEvents(state, &event))
@@ -122,25 +119,27 @@ int main(void) {
 
         // [Every Frame - Graphics]
 
+        // ensures height > 0
         if (state->height <= 0) {
             state->height = 1;
         }
 
         // DRAW
+        // clears prev frame buffer
         SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
         SDL_RenderClear(state->renderer);
 
-        doCanvas(state); // draws scope canvas
-
-
+        // adds all the things to new frame
+        updateScope(state); // updates scope surface
+        updateSettings(state); // updates settings surface
         isError = doWave(state, header, wavBuffer);
         if (isError) {
             appClose(state);
             return 2;
         }
 
+        // presents new frame
         SDL_RenderPresent(state->renderer);
-        //
     }
 
     appClose(state);
@@ -166,7 +165,6 @@ static int appInit(appState *state) {
         SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
-
     // VSYNC
     if (!SDL_SetRenderVSync(state->renderer, 1))
         SDL_Log("couldn't enable VSync: %s\n", SDL_GetError());

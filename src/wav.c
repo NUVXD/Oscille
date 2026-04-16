@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "SDL3/SDL.h"
-#include "wav.h"
+#include "WAV.h"
 
 #define MAX_FP_LEN 400U
 // http://soundfile.sapp.org/doc/WaveFormat/
@@ -77,7 +77,7 @@ static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
 
     char filePath[MAX_FP_LEN];
     printf("Input a WAV file:\n");
-    scanf_s("%s", filePath);
+    scanf("%s", filePath);
 
     *wavFile = fopen(filePath, "rb");
     if (!*wavFile) {

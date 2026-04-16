@@ -1,8 +1,8 @@
-#ifndef WAVE_H
-#define WAVE_H
+#ifndef SCOPE_H
+#define SCOPE_H
 
 #include "appstate.h"
-#include "wav.h"
+#include "WAV.h"
 
 typedef struct {
     uint32_t pointCount;
@@ -10,6 +10,5 @@ typedef struct {
 } Wave;
 
 extern int doWave(appState *state, HEADER header, uint8_t *wavBuffer);
-extern int doCanvas(appState *state);
 
 #endif

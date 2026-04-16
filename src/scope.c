@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "SDL3/SDL.h"
-#include "wave.h"
+#include "scope.h"
 #include "appstate.h"
 
 // TODO
@@ -43,12 +43,20 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
     _Bool isError;
 
     // origins to center of scope canvas
-    int originX = state.canvas.width / 2;  // canvas-width (x) center
-    int originY = state.canvas.height / 2; // canvas-height (y) center
+    int originX = state.scopeWidth / 2;  // canvas-width (x) center
+    int originY = state.scopeHeight / 2; // canvas-height (y) center
 
-    // the amount of the window's HEIGHT that the scope occupies, in percentage
-    //uint8_t SCALE = 90; // hard-coded for now, TODO as option (error case if < 0)
-    int TRANSFORM = ((state.height / 2) * SCALE / 100);
+    // scale/transform inits & checks
+    int TRANSFORM = ((state.scopeHeight / 2) * SCALE / 100);
+    int maxScaleX = originX - 1;
+    int maxScaleY = originY - 1;
+    int maxScale = maxScaleY;
+    if (maxScaleX < maxScaleY)
+        maxScale = maxScaleX;
+    if (maxScale < 1)
+        maxScale = 1;
+    if (TRANSFORM > maxScale)
+        TRANSFORM = maxScale;
 
     size_t startFrame, totalFrames;
     isError = whatFrame(state, header, &startFrame, &totalFrames);
@@ -70,6 +78,7 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         int32_t rightSample;
         float leftAmp;
         float rightAmp;
+
         switch (header.Format.bitsPerSample) {
             case 16:
                 leftSample = (int16_t)read16Bit(&wavBuffer[sampleOffset]);
@@ -89,8 +98,22 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
                 return 1;
         }
 
-        wave->points[i].x = originX + (leftAmp * TRANSFORM);
-        wave->points[i].y = originY + (rightAmp * TRANSFORM);
+        float x = (float)originX + (leftAmp * (float)TRANSFORM);
+        float y = (float)originY + (rightAmp * (float)TRANSFORM);
+
+        // keeps points inside scope and makes sure > 0
+        if (x < 0.0f)
+            x = 0.0f;
+        else if (x > (float)(state.scopeWidth - 1))
+            x = (float)(state.scopeWidth - 1);
+        if (y < 0.0f)
+            y = 0.0f;
+        else if (y > (float)(state.scopeHeight - 1))
+            y = (float)(state.scopeHeight - 1);
+
+        // populates points
+        wave->points[i].x = x;
+        wave->points[i].y = y;
     }
 
     return 0;
@@ -125,33 +148,6 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
 
     SDL_free(wave.points);
-
-    return 0;
-}
-
-int doCanvas(appState *state) {
-    state->canvas.height = state->height;
-    state->canvas.width = (state->width * 3 / 4);
-
-    state->canvas.LTop.x = 0.f;
-    state->canvas.LTop.y = 0.f;
-
-    state->canvas.LBottom.x = 0.f;
-    state->canvas.LBottom.y = (float)state->canvas.height;
-
-    state->canvas.RTop.x = (float)state->canvas.width;
-    state->canvas.RTop.y = 0.f;
-
-    state->canvas.RBottom.x = (float)state->canvas.width;
-    state->canvas.RBottom.y = (float)state->canvas.height;
-
-    float topx = state->canvas.RTop.x;
-    float topy = state->canvas.RTop.y;
-    float btmx = state->canvas.RBottom.x;
-    float btmy = state->canvas.RBottom.y;
-
-    SDL_SetRenderDrawColor(state->renderer, 74, 246, 38, 255); // green
-    SDL_RenderLine(state->renderer, topx, topy, btmx, btmy);
 
     return 0;
 }
