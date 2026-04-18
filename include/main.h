@@ -5,5 +5,6 @@
 #include "UI.h"
 #include "WAV.h"
 #include "scope.h"
+#include "events.h"
 
 #endif

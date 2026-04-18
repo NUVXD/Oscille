@@ -10,6 +10,7 @@
 #define _2PI (2 * SDL_PI_F)
 #define SCALE 90U // hard-coded for now, TODO as option (error case if < 0)
 #define MAX_SCOPE_POINTS 2048U // maximum possible number of total points per frame (pure cap, not sampling reduction)
+#define COLOR_GREEN 74,246,38,255
 
 static uint16_t read16Bit(const uint8_t *buffer) { return (uint16_t)(buffer[0] | ((uint16_t)buffer[1] << 8)); }
 static uint32_t read32Bit(const uint8_t *buffer) { return (uint32_t)(buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24)); }
@@ -144,7 +145,7 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
         return 1;
 
     // draw points
-    SDL_SetRenderDrawColor(state->renderer, 74, 246, 38, 255); // green
+    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN); // green
     SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
 
     SDL_free(wave.points);
