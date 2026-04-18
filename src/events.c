@@ -20,7 +20,7 @@ int appEvents(appState *state, SDL_Event *event) {
             {
                 float x, y;
                 SDL_GetMouseState(&x, &y);
-                UI_BTN_CLICKED button = getUIButton(x, y);
+                UI_BUTTONS button = getUIButton(x, y);
                 switch (button) {
                     case UI_BTN_PLAY:
                         SDL_Log("play button clicked\n");

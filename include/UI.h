@@ -9,10 +9,10 @@ typedef enum {
     UI_BTN_PAUSE,
     UI_BTN_RESUME,
 	UI_BTN_VOLUME
-} UI_BTN_CLICKED;
+} UI_BUTTONS;
 
 extern void updateScope(appState *state);
 extern void updateSettings(appState* state);
-extern UI_BTN_CLICKED getUIButton(float x, float y);
+extern UI_BUTTONS getUIButton(float x, float y);
 
 #endif
