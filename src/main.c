@@ -10,18 +10,6 @@
 #define WINDOW_INIT_W 900
 #define WINDOW_INIT_H 600
 
-static void printDebugHeaderInfo(HEADER header) {
-    printf("\nFILE SIZE ACCORDING TO FILE: %zu BYTES\n", header.Riff.fileSize);
-    printf("MAIN CHUNK: \n");
-    printf("| RiffID: %s\n", header.Riff.ID);
-    printf("| fileFormatID: % s\n", header.Riff.fileFormatID);
-    printf("SUBCHUNK 1: \n");
-    printf("| FormatID: %s\n", header.Format.ID);
-    printf("| BitsPerSample: %u\n", header.Format.bitsPerSample);
-    printf("| Frequency: %u\n", header.Format.frequency);
-    printf("| BytesPerSec: %u\n", header.Format.bytesPerSec);
-};
-
 static int appInit(appState *state) {
     // create window & renderer
     SDL_CreateWindowAndRenderer(
@@ -54,6 +42,8 @@ static int appClose(appState *state) {
     if (state) {
         if (state->audioStream)
             SDL_DestroyAudioStream(state->audioStream);
+        if (state->wavBuffer)
+            free(state->wavBuffer);
         if (state->window)
             SDL_DestroyWindow(state->window);
         if (state->renderer)
@@ -105,54 +95,6 @@ int main(void) {
      */
     _Bool isError;
 
-    HEADER header = { 0 };
-    uint8_t *wavBuffer = (void *)0;
-    isError = parseWAV(&header, &wavBuffer);
-    if (isError) {
-        appClose(state);
-        return 2;
-    }
-    printDebugHeaderInfo(header);
-
-    SDL_AudioSpec audioSpec = { 0 };
-    switch (header.Format.bitsPerSample) {
-        case 16:
-            audioSpec.format = SDL_AUDIO_S16;
-            break;
-        case 32:
-            audioSpec.format = SDL_AUDIO_S32;
-            break;
-        default:
-            SDL_Log("unsupported BitsPerSample\n");
-            appClose(state);
-            return 2;
-    }
-    audioSpec.channels = (int)header.Format.channelsNumber;
-    audioSpec.freq = (int)header.Format.frequency;
-    state->audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, (void *)0, (void *)0);
-
-    if (!state->audioStream) {
-        SDL_Log("unable to open audio stream: %s\n", SDL_GetError());
-        appClose(state);
-        if (wavBuffer)
-            free(wavBuffer);
-        return 2;
-    }
-    if (!SDL_PutAudioStreamData(state->audioStream, wavBuffer + header.Data.dataStart, (int)header.Data.size)) {
-        SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());
-        appClose(state);
-        if (wavBuffer)
-            free(wavBuffer);
-        return 2;
-    }
-    if (!SDL_ResumeAudioStreamDevice(state->audioStream)) {
-        SDL_Log("unable to start audio playback: %s\n", SDL_GetError());
-        appClose(state);
-        if (wavBuffer)
-            free(wavBuffer);
-        return 2;
-    }
-
     /*************************
     /          LOOP          /
     *************************/
@@ -176,10 +118,13 @@ int main(void) {
         // adds all the things to new frame
         updateScope(state); // updates scope surface
         updateSettings(state); // updates settings surface
-        isError = doWave(state, header, wavBuffer);
-        if (isError) {
-            appClose(state);
-            return 2;
+        if (state->wavBuffer) {
+            isError = doWave(state, state->header, state->wavBuffer);
+            if (isError) {
+                SDL_Log("error while drawing waveform\n");
+                appClose(state);
+                return 2;
+            }
         }
         // presents new frame
         SDL_RenderPresent(state->renderer);

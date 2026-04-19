@@ -66,6 +66,13 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         return 1;
     }
 
+    uint16_t bitsPerSample = header.Format.bitsPerSample;
+    switch (bitsPerSample) {
+        case 8: case 16: case 24: case 32: break; // all ok here
+        default: // anything else could cause issues, considering as error
+            SDL_Log("bitsPerSample must be 8, 16, 24, or 32 - current bitsPerSample: %u", bitsPerSample);
+            return 1;
+    }
     uint16_t sampleBytes = header.Format.bitsPerSample / 8;
 
     /*************************
@@ -74,6 +81,11 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
     for (size_t i = 0; i < wave->pointCount; i++) {
         size_t sampleFrame = (startFrame + i) % totalFrames;
         size_t sampleOffset = header.Data.dataStart + (sampleFrame * header.Format.bytesPerBlock);
+
+        if (sampleOffset + sampleBytes >= header.Data.size) {
+            SDL_Log("sampleOffset + sampleBytes exceeds allocated wav buffer\n");
+            return 1;
+        }
 
         int32_t leftSample;
         int32_t rightSample;
@@ -145,7 +157,7 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
         return 1;
 
     // draw points
-    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN); // green
+    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
     SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
 
     SDL_free(wave.points);

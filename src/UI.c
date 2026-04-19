@@ -205,7 +205,7 @@ void updateSettings(appState *state) {
     // [ROW 2]
     // Volume
     UI.btnVolume.h = BTN_H;
-    UI.btnVolume.w = settingsFrameW;
+    UI.btnVolume.w = settingsFrameW / 1;
     UI.btnVolume.x = settingsFrameX;
     UI.btnVolume.y = BTN_H + 1.f; // second row
     SDL_RenderRect(state->renderer, &UI.btnVolume);
