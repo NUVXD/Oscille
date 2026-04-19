@@ -5,6 +5,7 @@
 
 typedef enum {
     UI_BTN_NONE,
+    UI_FIELD_PATH,
     UI_BTN_PLAY,
     UI_BTN_PAUSE,
     UI_BTN_RESUME,

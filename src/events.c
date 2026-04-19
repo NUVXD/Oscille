@@ -34,8 +34,13 @@ int appEvents(appState *state, SDL_Event *event) {
                 SDL_GetMouseState(&x, &y);
                 UI_BUTTONS button = getUIButton(x, y);
                 switch (button) {
+                    case UI_FIELD_PATH: {
+                        SDL_Log("WAV filePath field clicked\n");
+                        break;
+                    }
+
                     case UI_BTN_PLAY: {
-                        
+
                         // TO MOVE AUDIO LOGIC INTO SEPARATE AUDIO FILE
 
                         SDL_Log("play button clicked\n");
@@ -106,19 +111,26 @@ int appEvents(appState *state, SDL_Event *event) {
 
                         break;
                     }
+
                     case UI_BTN_PAUSE:
                         SDL_Log("pause button clicked\n");
                         if (state->audioStream)
                             SDL_PauseAudioStreamDevice(state->audioStream);
                         break;
+
                     case UI_BTN_RESUME:
                         SDL_Log("resume button clicked\n");
                         if (state->audioStream)
                             SDL_ResumeAudioStreamDevice(state->audioStream);
                         break;
+
                     case UI_BTN_VOLUME:
+
+                        // MAYBE TO MOVE ON MOUSE BUTTON RELEASE
+
                         SDL_Log("volume button clicked\n");
                         break;
+
                     case UI_BTN_NONE:
                         SDL_Log("left mouse click outside buttons at XY coordinates %2.f %2.f\n", x, y);
                         break;

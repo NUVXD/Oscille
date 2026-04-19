@@ -7,6 +7,7 @@
 typedef struct {
     SDL_FRect scopeSurface;
     SDL_FRect settingsSurface;
+    SDL_FRect fieldPath;
     SDL_FRect btnPlay;
     SDL_FRect btnPause;
     SDL_FRect btnResume;
@@ -19,20 +20,6 @@ static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
         (x <= (button.x + button.w)) &&
         (y >= button.y) &&
         (y <= (button.y + button.h)));
-}
-
-void updateScope(appState *state) {
-    //
-    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
-
-    // Frame
-    UI.scopeSurface.w = (float)(state->width * 3 / 4);
-    UI.scopeSurface.h = (float)state->height;
-    UI.scopeSurface.x = 0.f;
-    UI.scopeSurface.y = 0.f;
-    state->scopeHeight = (int)UI.scopeSurface.h;
-    state->scopeWidth = (int)UI.scopeSurface.w;
-    SDL_RenderRect(state->renderer, &UI.scopeSurface);
 }
 
 static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btnRect) {
@@ -145,74 +132,117 @@ static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btn
 
         case UI_BTN_VOLUME:
         {
-            float volBarX = btnRect.x + 3.f; // starting point for bars
+            float volBarStartX = btnRect.x + 3.f; // starting point for bars
+            float volBarStepX = volBarStartX;
+            float volBarEndX;
+
             float volBarCapX = btnHalfWidth / 2; // draw space, number of bars depends on available width
             float volBarOffY = btnHalfHeight / 2; // quarter height
             float volBarPosOffY = btnCenterY + volBarOffY; // quarter height above center Y
             float volBarNegOffY = btnCenterY - volBarOffY; // quarter height below center Y
 
             for (size_t i = 0; (float)i <= volBarCapX - 4.f; i++) {
-                volBarX += 4.f;
-                SDL_RenderLine(renderer, volBarX, volBarPosOffY, volBarX, volBarNegOffY);
+                volBarStepX += 4.f;
+                SDL_RenderLine(renderer, volBarStepX, volBarPosOffY, volBarStepX, volBarNegOffY);
             }
+            volBarEndX = volBarStepX;
             break;
         }
 
         case UI_BTN_NONE:
+        case UI_FIELD_PATH:
         default:
             break;
     }
 };
+
+void updateScope(appState *state) {
+    //
+    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
+
+    // Frame
+    UI.scopeSurface = (SDL_FRect){
+        .w = (float)(state->width * 3 / 4),
+        .h = (float)state->height,
+        .x = 0.f,
+        .y = 0.f
+    };
+    state->scopeHeight = (int)UI.scopeSurface.h;
+    state->scopeWidth = (int)UI.scopeSurface.w;
+    SDL_RenderRect(state->renderer, &UI.scopeSurface);
+}
 
 void updateSettings(appState *state) {
     //
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
 
     // Frame
-    UI.settingsSurface.h = (float)state->height;
-    UI.settingsSurface.w = (float)(state->width - state->scopeWidth);
-    UI.settingsSurface.x = (float)state->scopeWidth;
-    UI.settingsSurface.y = 0.f;
+    UI.settingsSurface = (SDL_FRect){
+        .h = (float)state->height,
+        .w = (float)(state->width - state->scopeWidth),
+        .x = (float)state->scopeWidth,
+        .y = 0.f
+    };
     SDL_RenderRect(state->renderer, &UI.settingsSurface);
 
     float BTN_H = 35.f; // default settings-button height, helps with row calc
     float settingsFrameW = (UI.settingsSurface.w - 2); // "- 2" j for aesthetic purposes
     float settingsFrameX = (UI.settingsSurface.x + 1); // cuz the "- 2" above
 
+    // [ROW 0]
+    // WAV filePath field
+    UI.fieldPath = (SDL_FRect){
+        .h = BTN_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (BTN_H * 0) + 1.f
+    };
+    SDL_RenderRect(state->renderer, &UI.fieldPath);
+
     // [ROW 1]
     // Play
-    UI.btnPlay.h = BTN_H;
-    UI.btnPlay.w = settingsFrameW / 3;
-    UI.btnPlay.x = settingsFrameX;
-    UI.btnPlay.y = 1.f;
+    UI.btnPlay = (SDL_FRect){
+        .h = BTN_H,
+        .w = settingsFrameW / 3,
+        .x = settingsFrameX,
+        .y = (BTN_H * 1) + 1.f
+    };
     SDL_RenderRect(state->renderer, &UI.btnPlay);
     drawSymbol(state->renderer, UI_BTN_PLAY, UI.btnPlay);
     // Pause
-    UI.btnPause.h = BTN_H;
-    UI.btnPause.w = settingsFrameW / 3;
-    UI.btnPause.x = UI.btnPlay.x + UI.btnPlay.w; // to the right of Play Btn
-    UI.btnPause.y = 1.f;
+    UI.btnPause = (SDL_FRect){
+        .h = BTN_H,
+        .w = settingsFrameW / 3,
+        .x = UI.btnPlay.x + UI.btnPlay.w, // to the right of Play Btn
+        .y = (BTN_H * 1) + 1.f
+    };
     SDL_RenderRect(state->renderer, &UI.btnPause);
     drawSymbol(state->renderer, UI_BTN_PAUSE, UI.btnPause);
     // Resume
-    UI.btnResume.h = BTN_H;
-    UI.btnResume.w = settingsFrameW / 3;
-    UI.btnResume.x = UI.btnPause.x + UI.btnPause.w; // to the right of Pause Btn
-    UI.btnResume.y = 1.f;
+    UI.btnResume = (SDL_FRect){
+        .h = BTN_H,
+        .w = settingsFrameW / 3, // to the right of Pause Btn
+        .x = UI.btnPause.x + UI.btnPause.w,
+        .y = (BTN_H * 1) + 1.f
+    };
     SDL_RenderRect(state->renderer, &UI.btnResume);
     drawSymbol(state->renderer, UI_BTN_RESUME, UI.btnResume);
 
     // [ROW 2]
     // Volume
-    UI.btnVolume.h = BTN_H;
-    UI.btnVolume.w = settingsFrameW / 1;
-    UI.btnVolume.x = settingsFrameX;
-    UI.btnVolume.y = BTN_H + 1.f; // second row
+    UI.btnVolume = (SDL_FRect){
+        .h = BTN_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (BTN_H * 2) + 1.f
+    };
     SDL_RenderRect(state->renderer, &UI.btnVolume);
     drawSymbol(state->renderer, UI_BTN_VOLUME, UI.btnVolume);
 }
 
 UI_BUTTONS getUIButton(float x, float y) {
+    if (isMouseInButton(x, y, UI.fieldPath))
+        return UI_FIELD_PATH;
     if (isMouseInButton(x, y, UI.btnPlay))
         return UI_BTN_PLAY;
     if (isMouseInButton(x, y, UI.btnPause))
