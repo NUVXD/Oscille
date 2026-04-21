@@ -22,7 +22,7 @@ static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
         (y <= (button.y + button.h)));
 }
 
-static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btnRect) {
+static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
     float btnHalfWidth = btnRect.w / 2;
     float btnHalfHeight = btnRect.h / 2;
     float btnCenterX = btnRect.x + btnHalfWidth;
@@ -51,7 +51,7 @@ static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btn
             points[2].y = btnCenterY + 0.f;
             points[3].y = btnCenterY + 7.5f;
 
-            SDL_RenderLines(renderer, points, pointCount);
+            SDL_RenderLines(state->renderer, points, pointCount);
             break;
         }
 
@@ -76,8 +76,8 @@ static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btn
             rightBar.h = 16.f;
             rightBar.y = btnCenterY - 7.5f;
 
-            SDL_RenderRect(renderer, &leftBar);
-            SDL_RenderRect(renderer, &rightBar);
+            SDL_RenderRect(state->renderer, &leftBar);
+            SDL_RenderRect(state->renderer, &rightBar);
             break;
         }
 
@@ -125,31 +125,13 @@ static void drawSymbol(SDL_Renderer *renderer, UI_BUTTONS btnType, SDL_FRect btn
             points[2].y = btnCenterY + 0.f;
             points[3].y = btnCenterY + halfHeight;
 
-            SDL_RenderRect(renderer, &leftBar);
-            SDL_RenderLines(renderer, points, pointCount);
-            break;
-        }
-
-        case UI_BTN_VOLUME:
-        {
-            float volBarStartX = btnRect.x + 3.f; // starting point for bars
-            float volBarStepX = volBarStartX;
-            float volBarEndX;
-
-            float volBarCapX = btnHalfWidth / 2; // draw space, number of bars depends on available width
-            float volBarOffY = btnHalfHeight / 2; // quarter height
-            float volBarPosOffY = btnCenterY + volBarOffY; // quarter height above center Y
-            float volBarNegOffY = btnCenterY - volBarOffY; // quarter height below center Y
-
-            for (size_t i = 0; (float)i <= volBarCapX - 4.f; i++) {
-                volBarStepX += 4.f;
-                SDL_RenderLine(renderer, volBarStepX, volBarPosOffY, volBarStepX, volBarNegOffY);
-            }
-            volBarEndX = volBarStepX;
+            SDL_RenderRect(state->renderer, &leftBar);
+            SDL_RenderLines(state->renderer, points, pointCount);
             break;
         }
 
         case UI_BTN_NONE:
+        case UI_BTN_VOLUME:
         case UI_FIELD_PATH:
         default:
             break;
@@ -208,7 +190,7 @@ void updateSettings(appState *state) {
         .y = (BTN_H * 1) + 1.f
     };
     SDL_RenderRect(state->renderer, &UI.btnPlay);
-    drawSymbol(state->renderer, UI_BTN_PLAY, UI.btnPlay);
+    drawSymbol(state, UI_BTN_PLAY, UI.btnPlay);
     // Pause
     UI.btnPause = (SDL_FRect){
         .h = BTN_H,
@@ -217,7 +199,7 @@ void updateSettings(appState *state) {
         .y = (BTN_H * 1) + 1.f
     };
     SDL_RenderRect(state->renderer, &UI.btnPause);
-    drawSymbol(state->renderer, UI_BTN_PAUSE, UI.btnPause);
+    drawSymbol(state, UI_BTN_PAUSE, UI.btnPause);
     // Resume
     UI.btnResume = (SDL_FRect){
         .h = BTN_H,
@@ -226,18 +208,44 @@ void updateSettings(appState *state) {
         .y = (BTN_H * 1) + 1.f
     };
     SDL_RenderRect(state->renderer, &UI.btnResume);
-    drawSymbol(state->renderer, UI_BTN_RESUME, UI.btnResume);
+    drawSymbol(state, UI_BTN_RESUME, UI.btnResume);
 
     // [ROW 2]
     // Volume
-    UI.btnVolume = (SDL_FRect){
+    SDL_FRect volFrameBig = {
         .h = BTN_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
         .y = (BTN_H * 2) + 1.f
     };
+    SDL_RenderRect(state->renderer, &volFrameBig);
+
+    UI.btnVolume = (SDL_FRect){
+        .h = volFrameBig.h / 2,
+        .w = volFrameBig.w - 20.f,
+        .x = volFrameBig.x + 10.f,
+        .y = (volFrameBig.y + (volFrameBig.h / 2)) - (UI.btnVolume.h / 2)
+    };
+    if (UI.btnVolume.w == 0) UI.btnVolume.w = 0.00001f;
     SDL_RenderRect(state->renderer, &UI.btnVolume);
-    drawSymbol(state->renderer, UI_BTN_VOLUME, UI.btnVolume);
+
+    SDL_FRect volBar = {
+        .h = UI.btnVolume.h,
+        .w = UI.btnVolume.w / 2, // default 0.5f
+        .x = UI.btnVolume.x,
+        .y = UI.btnVolume.y
+    };
+    if (volBar.w == 0) volBar.w = 0.00001f;
+    SDL_RenderFillRect(state->renderer, &volBar);
+
+    float minVol = volBar.x;
+    float maxVol = volBar.w;
+
+    float volumeVal = maxVol / minVol;
+
+    float prevGain = SDL_GetAudioStreamGain(state->audioStream);
+    if (prevGain != volumeVal)
+        SDL_SetAudioStreamGain(state->audioStream, volumeVal);
 }
 
 UI_BUTTONS getUIButton(float x, float y) {

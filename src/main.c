@@ -63,16 +63,15 @@ int main(void) {
         SDL_Log("failed to allocate appState\n");
         return 2;
     }
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         SDL_Log("unable to initialize SDL - VIDEO or AUDIO: %s\n", SDL_GetError());
-        free(state);
-        return 2;
+        appClose(state);
+    }
     }
     if (appInit(state) != 0) // (== 0): app correctly initialized, (!= 0): app not initialized
     {
         SDL_Log("app initialization failed\n");
         appClose(state);
-        return 2;
     }
 
     /**

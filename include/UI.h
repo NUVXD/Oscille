@@ -1,7 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
-#include "appstate.h"
+struct appState;
 
 typedef enum {
     UI_BTN_NONE,
@@ -12,8 +12,8 @@ typedef enum {
 	UI_BTN_VOLUME
 } UI_BUTTONS;
 
-extern void updateScope(appState *state);
-extern void updateSettings(appState* state);
+extern void updateScope(struct appState *state);
+extern void updateSettings(struct appState* state);
 extern UI_BUTTONS getUIButton(float x, float y);
 
 #endif

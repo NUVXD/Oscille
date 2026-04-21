@@ -156,6 +156,13 @@ static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
     return 0;
 }
 
+void freeWAV(uint8_t **wavBuffer) {
+    if (*wavBuffer) {
+        free(*wavBuffer);
+        *wavBuffer = (void *)0;
+    }
+}
+
 int parseWAV(HEADER *header, uint8_t **wavBuffer) {
     FILE *wavFile = (void *)0;
     _Bool isError;
