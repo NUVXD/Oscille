@@ -4,6 +4,7 @@
 #include <math.h>
 #include <time.h>
 #include "SDL3/SDL.h"
+#include "SDL3_ttf/SDL_ttf.h"
 #include "main.h"
 
 #define WINDOW_TITLE "Oscille"
@@ -69,6 +70,9 @@ int main(void) {
         SDL_Log("unable to initialize SDL - VIDEO or AUDIO: %s\n", SDL_GetError());
         appClose(state);
     }
+    if (!TTF_Init()) {
+        SDL_Log("couldn't init TTF: %s\n", SDL_GetError());
+        appClose(state);
     }
     if (appInit(state) != 0) // (== 0): app correctly initialized, (!= 0): app not initialized
     {

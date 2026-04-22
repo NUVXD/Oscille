@@ -17,13 +17,16 @@
                 
                 "/I${workspaceFolder}${/}include",
                 "/external:I${workspaceFolder}${/}external${/}SDL3${/}include${/}",
+                "/external:I${workspaceFolder}${/}external${/}SDL3_ttf${/}include${/}",
 
                 "/Fo${workspaceFolder}${/}build${/}",
                 "/Fe${workspaceFolder}${/}build${/}Oscille.exe",
                 
                 "/link",
                 "/LIBPATH:${workspaceFolder}${/}external${/}SDL3${/}lib${/}x64",
-                "SDL3.lib"
+                "SDL3.lib",
+                "/LIBPATH:${workspaceFolder}${/}external${/}SDL3_ttf${/}lib${/}x64",
+                "SDL3_ttf.lib"
             ],
             "options": {
                 "cwd": "${fileDirname}"

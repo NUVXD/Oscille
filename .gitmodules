@@ -1,4 +1,8 @@
 [submodule "external/SDL3"]
 	path = external/SDL3
-	url = https://github.com/NUVXD/SDL
-	branch = submodule
+	url = https://github.com/NUVXD/SDL-Release-3.4
+	branch = main
+[submodule "external/SDL3_ttf"]
+	path = external/SDL3_ttf
+	url = https://github.com/NUVXD/SDL_ttf-Release-3.2
+	branch = main

@@ -180,6 +180,8 @@ void updateSettings(appState *state) {
         .y = (BTN_H * 0) + 1.f
     };
     SDL_RenderRect(state->renderer, &UI.fieldPath);
+    // just for now, until i use SDL_ttf
+    SDL_RenderDebugText(state->renderer, UI.fieldPath.x + 5.f, UI.fieldPath.y + (UI.fieldPath.h / 3), "WAV FilePath: ");
 
     // [ROW 1]
     // Play

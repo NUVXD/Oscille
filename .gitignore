@@ -55,6 +55,9 @@ dkms.conf
 # debug information files
 *.dwo
 
+# other & external
+!SDL3_ttf.*
+
 # temp & hidden idk
 .vscode/*
 !.vscode/tasks.json
