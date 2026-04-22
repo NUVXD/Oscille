@@ -1,6 +1,11 @@
 #include "SDL3/SDL.h"
 #include "appstate.h"
 
+void setGain(appState *state, float gain) {
+    if (state->audioStream && !SDL_SetAudioStreamGain(state->audioStream, gain))
+        SDL_Log("unable to set audio stream gain: %s\n", SDL_GetError());
+}
+
 void initAudio(appState *state) {
     SDL_AudioSpec audioSpec = { 0 };
     uint16_t bitsPerSample = state->header.Format.bitsPerSample;
@@ -24,6 +29,8 @@ void initAudio(appState *state) {
         }
         return;
     }
+
+    setGain(state, state->volumeGain);
 
     if (!SDL_PutAudioStreamData(state->audioStream, state->wavBuffer + state->header.Data.dataStart, (int)state->header.Data.size)) {
         SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());

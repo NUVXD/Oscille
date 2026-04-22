@@ -12,8 +12,10 @@ typedef struct appState {
     uint8_t *wavBuffer;
     HEADER header;
     SDL_AudioStream *audioStream;
+
     int scopeWidth, scopeHeight;
     int width, height;
+    float volumeGain;
 } appState;
 
 #endif

@@ -14,6 +14,7 @@ typedef enum {
 
 extern void updateScope(struct appState *state);
 extern void updateSettings(struct appState* state);
-extern UI_BUTTONS getUIButton(float x, float y);
+extern UI_BUTTONS getUIButtonEnum(float x, float y);
+extern SDL_FRect getUIButtonRect(UI_BUTTONS button);
 
 #endif

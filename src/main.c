@@ -63,6 +63,8 @@ int main(void) {
         SDL_Log("failed to allocate appState\n");
         return 2;
     }
+    state->volumeGain = 0.5f;
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         SDL_Log("unable to initialize SDL - VIDEO or AUDIO: %s\n", SDL_GetError());
         appClose(state);

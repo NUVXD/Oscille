@@ -219,7 +219,6 @@ void updateSettings(appState *state) {
         .y = (BTN_H * 2) + 1.f
     };
     SDL_RenderRect(state->renderer, &volFrameBig);
-
     UI.btnVolume = (SDL_FRect){
         .h = volFrameBig.h / 2,
         .w = volFrameBig.w - 20.f,
@@ -228,27 +227,22 @@ void updateSettings(appState *state) {
     };
     if (UI.btnVolume.w == 0) UI.btnVolume.w = 0.00001f;
     SDL_RenderRect(state->renderer, &UI.btnVolume);
-
+    // ts is only UI representation of gain
+    float UIgain = state->volumeGain;
+    // clamps if for some reason < 0 || > 1
+    if (UIgain < 0.f) UIgain = 0.f;
+    if (UIgain > 1.f) UIgain = 1.f;
     SDL_FRect volBar = {
         .h = UI.btnVolume.h,
-        .w = UI.btnVolume.w / 2, // default 0.5f
+        .w = UI.btnVolume.w * UIgain,
         .x = UI.btnVolume.x,
         .y = UI.btnVolume.y
     };
     if (volBar.w == 0) volBar.w = 0.00001f;
     SDL_RenderFillRect(state->renderer, &volBar);
-
-    float minVol = volBar.x;
-    float maxVol = volBar.w;
-
-    float volumeVal = maxVol / minVol;
-
-    float prevGain = SDL_GetAudioStreamGain(state->audioStream);
-    if (prevGain != volumeVal)
-        SDL_SetAudioStreamGain(state->audioStream, volumeVal);
 }
 
-UI_BUTTONS getUIButton(float x, float y) {
+UI_BUTTONS getUIButtonEnum(float x, float y) {
     if (isMouseInButton(x, y, UI.fieldPath))
         return UI_FIELD_PATH;
     if (isMouseInButton(x, y, UI.btnPlay))
@@ -260,4 +254,22 @@ UI_BUTTONS getUIButton(float x, float y) {
     if (isMouseInButton(x, y, UI.btnVolume))
         return UI_BTN_VOLUME;
     return UI_BTN_NONE;
+}
+
+SDL_FRect getUIButtonRect(UI_BUTTONS button) {
+    switch (button) {
+        case UI_BTN_VOLUME:
+            return UI.btnVolume;
+        case UI_FIELD_PATH:
+            return UI.fieldPath;
+        case UI_BTN_PLAY:
+            return UI.btnPlay;
+        case UI_BTN_PAUSE:
+            return UI.btnPause;
+        case UI_BTN_RESUME:
+            return UI.btnResume;
+        case UI_BTN_NONE:
+            break;
+    }
+    return (SDL_FRect) { 0 };
 }
