@@ -52,6 +52,7 @@ static int appClose(appState *state) {
         free(state);
     }
     SDL_Quit();
+    TTF_Quit();
     return 0;
 }
 
