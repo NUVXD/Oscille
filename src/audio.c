@@ -7,20 +7,25 @@ void setGain(appState *state, float gain) {
 }
 
 void initAudio(appState *state) {
-    SDL_AudioSpec audioSpec = { 0 };
     uint16_t bitsPerSample = state->header.Format.bitsPerSample;
     if (bitsPerSample == 16)
-        audioSpec.format = SDL_AUDIO_S16;
+        state->audioSpec.format = SDL_AUDIO_S16;
     else if (bitsPerSample == 32)
-        audioSpec.format = SDL_AUDIO_S32;
+        state->audioSpec.format = SDL_AUDIO_S32;
     else {
         SDL_Log("unsupported BitsPerSample\n");
         return;
     }
-    audioSpec.channels = (int)state->header.Format.channelsNumber;
-    audioSpec.freq = (int)state->header.Format.frequency;
+    state->audioSpec.channels = (int)state->header.Format.channelsNumber;
+    state->audioSpec.freq = (int)state->header.Format.frequency;
 
-    state->audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audioSpec, (void *)0, (void *)0);
+    state->audioStream = SDL_OpenAudioDeviceStream(
+        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, 
+        &state->audioSpec, 
+        (void *)0, 
+        (void *)0
+    );
+
     if (!state->audioStream) {
         SDL_Log("unable to open audio stream: %s\n", SDL_GetError());
         if (state->wavBuffer) {
