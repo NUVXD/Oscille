@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
 #include "SDL3/SDL.h"
 #include "WAV.h"
 
@@ -21,19 +22,21 @@ static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header
         return 1;
     }
     memcpy(header->Riff.ID, &buffer[0], 4);
-    header->Riff.ID[4] = '\0';
     header->Riff.fileSize = read32Bit(&buffer[4]);
     memcpy(header->Riff.fileFormatID, &buffer[8], 4);
-    header->Riff.fileFormatID[4] = '\0';
     if (memcmp(&buffer[0], "RIFF", 4) != 0 || memcmp(&buffer[8], "WAVE", 4) != 0) {
         SDL_Log("found no RIFF/WAVE identifiers\n");
         return 1;
     }
     while (offset + 8 <= fileBytes) {
         const uint8_t *chunkID = &buffer[offset];
-
+        
         uint32_t chunkSize = read32Bit(&buffer[offset + 4]);
         size_t chunkDataOffset = offset + 8;
+        if (chunkDataOffset > UINT32_MAX) {
+            SDL_Log("chunkDataOffset exceeds supported range\n");
+            return 1;
+        }
         if (chunkSize > fileBytes - chunkDataOffset) {
             SDL_Log("chunk size exceeds remaining file\n");
             return 1;
@@ -51,7 +54,6 @@ static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header
                 return 1;
             }
             memcpy(header->Format.ID, chunkID, 4);
-            header->Format.ID[4] = '\0';
             header->Format.size = chunkSize;
             header->Format.audioFormat = read16Bit(&buffer[chunkDataOffset + 0]);
             header->Format.channelsNumber = read16Bit(&buffer[chunkDataOffset + 2]);
@@ -63,9 +65,8 @@ static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header
         }
         else if (memcmp(chunkID, "data", 4) == 0) {
             memcpy(header->Data.ID, chunkID, 4);
-            header->Data.ID[4] = '\0';
             header->Data.size = chunkSize;
-            header->Data.dataStart = chunkDataOffset;
+            header->Data.dataStart = (uint32_t)chunkDataOffset;
             dataFound = 1;
         }
 

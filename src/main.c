@@ -7,11 +7,33 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "main.h"
 
+/**
+ *     ██████╗ ███████╗ ██████╗██╗██╗     ██╗     ███████╗
+ *    ██╔═══██╗██╔════╝██╔════╝██║██║     ██║     ██╔════╝
+ *    ██║   ██║███████╗██║     ██║██║     ██║     █████╗
+ *    ██║   ██║╚════██║██║     ██║██║     ██║     ██╔══╝
+ *    ╚██████╔╝███████║╚██████╗██║███████╗███████╗███████╗
+ *     ╚═════╝ ╚══════╝ ╚═════╝╚═╝╚══════╝╚══════╝╚══════╝
+ *
+ * ASCII art made with:
+ * https://patorjk.com/software/taag/#p=display&f=ANSI%20Shadow
+ */
+
 #define WINDOW_TITLE "Oscille"
 #define WINDOW_INIT_W 900
 #define WINDOW_INIT_H 600
 
 static int appInit(appState *state) {
+    // init and check SDL Video & SDL Audio
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+        SDL_Log("unable to initialize SDL - VIDEO or AUDIO: %s\n", SDL_GetError());
+        return 2;
+    }
+    // init SDL TTF
+    if (!TTF_Init()) {
+        SDL_Log("couldn't init TTF: %s\n", SDL_GetError());
+        return 2;
+    }
     // create window & renderer
     SDL_CreateWindowAndRenderer(
         WINDOW_TITLE,
@@ -30,11 +52,31 @@ static int appInit(appState *state) {
         SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
-    // VSYNC
+    // create & check text engine
+    state->textEngine = TTF_CreateRendererTextEngine(state->renderer);
+    if (!state->textEngine) {
+        SDL_Log("unable to create text engine: %s\n", SDL_GetError());
+        return 2;
+    }
+    // init & check font
+    state->font = TTF_OpenFont("../assets/monospace.ttf", 15);
+    if (!state->font) {
+        SDL_Log("unable to load font: %s\n", SDL_GetError());
+        return 2;
+    }
+    // init & check text object
+    state->text = TTF_CreateText(state->textEngine, state->font, "\0", 0);
+    if (!state->text) {
+        SDL_Log("unablel to create text object: %s\n", SDL_GetError());
+        return 2;
+    }
+    // enables V-SYNC
     if (!SDL_SetRenderVSync(state->renderer, 1))
         SDL_Log("couldn't enable VSync: %s\n", SDL_GetError());
 
+    // inits various appState variables
     SDL_GetWindowSize(state->window, &state->width, &state->height);
+    state->volumeGain = 0.5f;
 
     return 0;
 }
@@ -49,6 +91,12 @@ static int appClose(appState *state) {
             SDL_DestroyWindow(state->window);
         if (state->renderer)
             SDL_DestroyRenderer(state->renderer);
+        if (state->textEngine)
+            TTF_DestroyRendererTextEngine(state->textEngine);
+        if (state->font)
+            TTF_CloseFont(state->font);
+        if (state->text)
+            TTF_DestroyText(state->text);
         free(state);
     }
     SDL_Quit();
@@ -60,46 +108,17 @@ int main(void) {
     /*************************
     /      INIT & GUARDS     /
     *************************/
+    _Bool isError;
     appState *state = (appState *)calloc(1, sizeof(appState));
     if (!state) {
         SDL_Log("failed to allocate appState\n");
         return 2;
-    }
-    state->volumeGain = 0.5f;
-
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
-        SDL_Log("unable to initialize SDL - VIDEO or AUDIO: %s\n", SDL_GetError());
-        appClose(state);
-    }
-    if (!TTF_Init()) {
-        SDL_Log("couldn't init TTF: %s\n", SDL_GetError());
-        appClose(state);
     }
     if (appInit(state) != 0) // (== 0): app correctly initialized, (!= 0): app not initialized
     {
         SDL_Log("app initialization failed\n");
         appClose(state);
     }
-
-    /**
-     * Trying out this new way of checking errors,
-     * seems more readable (and better-looking),
-     * also seems to adhere to what looks like consensus on error handling (?)
-     * i might also try messing around with SDL's error handling in the future,
-     * but for now i'll experiment with plain C to figure out what i like best
-     *
-     * Usually, i returned 0 on errors and checked immediately on function call
-     * like if function(x) returned 0 on errors and i wanted to call it i'd do:
-     * `if( !function(x) ){ printf("error! \\n"); }`
-     *
-     * I can picture ts new way would help discern error codes in a way,
-     * like if i wanted to have a single errors-handler with different error codes
-     * (since anything != 0 is TRUE)
-     * ^ tho i won't do this now
-     *
-     * not sure how scalable either
-     */
-    _Bool isError;
 
     /*************************
     /          LOOP          /

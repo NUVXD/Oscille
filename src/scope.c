@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <limits.h>
 #include "SDL3/SDL.h"
 #include "scope.h"
 #include "appstate.h"
@@ -158,7 +159,9 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
 
     // draw points
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
-    SDL_RenderPoints(state->renderer, wave.points, wave.pointCount);
+    if (wave.pointCount > INT_MAX)
+        return 1;
+    SDL_RenderPoints(state->renderer, wave.points, (int)wave.pointCount);
 
     SDL_free(wave.points);
 

@@ -7,12 +7,12 @@
 
 static void printDebugHeaderInfo(appState *state) {
     SDL_Log("\n");
-    SDL_Log("FILE SIZE ACCORDING TO FILE: %zu BYTES\n", state->header.Riff.fileSize);
+    SDL_Log("FILE SIZE ACCORDING TO FILE: %u BYTES\n", state->header.Riff.fileSize);
     SDL_Log("MAIN CHUNK: \n");
-    SDL_Log("| RiffID: %s\n", state->header.Riff.ID);
-    SDL_Log("| fileFormatID: % s\n", state->header.Riff.fileFormatID);
+    SDL_Log("| RiffID: %.4s\n", state->header.Riff.ID);
+    SDL_Log("| fileFormatID: %.4s\n", state->header.Riff.fileFormatID);
     SDL_Log("SUBCHUNK 1: \n");
-    SDL_Log("| FormatID: %s\n", state->header.Format.ID);
+    SDL_Log("| FormatID: %.4s\n", state->header.Format.ID);
     SDL_Log("| BitsPerSample: %u\n", state->header.Format.bitsPerSample);
     SDL_Log("| Frequency: %u\n", state->header.Format.frequency);
     SDL_Log("| BytesPerSec: %u\n", state->header.Format.bytesPerSec);
