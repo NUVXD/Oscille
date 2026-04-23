@@ -27,6 +27,19 @@ typedef struct {
     float y;
 } UI_TEXT;
 
+static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect *rect) {
+    UI_Text->text = textString;
+    TTF_SetTextString(state->text, UI_Text->text, 0);
+    TTF_GetTextSize(state->text, &UI_Text->w, &UI_Text->h);
+    UI_Text->x = (rect->x + (rect->w / 2)) - (UI_Text->w / 2);
+    UI_Text->y = (rect->y + (rect->h / 2)) - (UI_Text->h / 2);
+    /*
+    if (UI_Text->h > rect->h)
+        rect->h = UI_Text->h + 10.f;
+    */
+    TTF_DrawRendererText(state->text, UI_Text->x, UI_Text->y);
+}
+
 char textAudioVolume[] = "Audio Device Volume";
 
 static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
@@ -190,22 +203,15 @@ void updateSettings(appState *state) {
     TTF_SetTextWrapWidth(state->text, (int)settingsFrameW - 1);
 
     // [ROW 0]
-
     // WAV filePath title
     UI.titlePath = (SDL_FRect){
     .h = ROW_TITLE_H,
     .w = settingsFrameW / 1,
     .x = settingsFrameX,
     .y = (ROW_H * 0) };
-    SDL_RenderRect(state->renderer, &UI.titlePath);
-    //
     UI_TEXT titleWAVPath;
-    titleWAVPath.text = "WAV File Path";
-    TTF_SetTextString(state->text, titleWAVPath.text, 0);
-    TTF_GetTextSize(state->text, &titleWAVPath.w, &titleWAVPath.h);
-    titleWAVPath.x = (UI.titlePath.x + (UI.titlePath.w / 2)) - (titleWAVPath.w / 2);
-    titleWAVPath.y = (UI.titlePath.y + (ROW_TITLE_H / 2)) - (titleWAVPath.h / 2);
-    TTF_DrawRendererText(state->text, titleWAVPath.x, titleWAVPath.y);
+    renderTitle(state, &titleWAVPath, "WAV File Path", &UI.titlePath);
+    SDL_RenderRect(state->renderer, &UI.titlePath);
 
     // WAV filePath field
     UI.fieldPath = (SDL_FRect){
@@ -216,22 +222,15 @@ void updateSettings(appState *state) {
     SDL_RenderRect(state->renderer, &UI.fieldPath);
 
     // [ROW 1]
-
     // Controls title
     UI.titleControls = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
         .y = (ROW_H * 1) };
-    SDL_RenderRect(state->renderer, &UI.titleControls);
-    //
     UI_TEXT titleWAVControls;
-    titleWAVControls.text = "WAV Audio Controls";
-    TTF_SetTextString(state->text, titleWAVControls.text, 0);
-    TTF_GetTextSize(state->text, &titleWAVControls.w, &titleWAVControls.h);
-    titleWAVControls.x = (UI.titleControls.x + (UI.titleControls.w / 2)) - (titleWAVControls.w / 2);
-    titleWAVControls.y = (UI.titleControls.y + (ROW_TITLE_H / 2)) - (titleWAVControls.h / 2);
-    TTF_DrawRendererText(state->text, titleWAVControls.x, titleWAVControls.y);
+    renderTitle(state, &titleWAVControls, "WAV Audio Controls", &UI.titleControls);
+    SDL_RenderRect(state->renderer, &UI.titleControls);
 
     // Play button
     UI.btnPlay = (SDL_FRect){
@@ -241,7 +240,6 @@ void updateSettings(appState *state) {
         .y = (ROW_H * 1) + ROW_TITLE_H };
     SDL_RenderRect(state->renderer, &UI.btnPlay);
     drawSymbol(state, UI_BTN_PLAY, UI.btnPlay);
-
     // Pause button
     UI.btnPause = (SDL_FRect){
         .h = ROW_ELEMENT_H,
@@ -250,7 +248,6 @@ void updateSettings(appState *state) {
         .y = (ROW_H * 1) + ROW_TITLE_H };
     SDL_RenderRect(state->renderer, &UI.btnPause);
     drawSymbol(state, UI_BTN_PAUSE, UI.btnPause);
-
     // Resume button
     UI.btnResume = (SDL_FRect){
         .h = ROW_ELEMENT_H,
@@ -261,22 +258,15 @@ void updateSettings(appState *state) {
     drawSymbol(state, UI_BTN_RESUME, UI.btnResume);
 
     // [ROW 2]
-
     // Volume title
     UI.titleVolume = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
         .y = (ROW_H * 2) };
+    UI_TEXT titleAudioVolume;
+    renderTitle(state, &titleAudioVolume, "WAV Audio Volume", &UI.titleVolume);
     SDL_RenderRect(state->renderer, &UI.titleVolume);
-    //
-    UI_TEXT titleVolumeControl;
-    titleVolumeControl.text = "WAV Audio Volume";
-    TTF_SetTextString(state->text, titleVolumeControl.text, 0);
-    TTF_GetTextSize(state->text, &titleVolumeControl.w, &titleVolumeControl.h);
-    titleVolumeControl.x = (UI.titleVolume.x + (UI.titleControls.w / 2)) - (titleVolumeControl.w / 2);
-    titleVolumeControl.y = (UI.titleVolume.y + (ROW_TITLE_H / 2)) - (titleVolumeControl.h / 2);
-    TTF_DrawRendererText(state->text, titleVolumeControl.x, titleVolumeControl.y);
 
     // Volume slider
     SDL_FRect volFrameBig = {
