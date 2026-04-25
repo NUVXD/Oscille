@@ -19,8 +19,8 @@ static uint32_t read32Bit(const uint8_t *buffer) { return (uint32_t)(buffer[0] |
 static _Bool whatFrame(appState state, HEADER header, size_t *startFrame, size_t *totalFrames) {
     size_t playedFrame = 0;
 
-    if (state.audioStream) {
-        int queuedBytes = SDL_GetAudioStreamQueued(state.audioStream);
+    if (state.AUDIO.audioStream) {
+        int queuedBytes = SDL_GetAudioStreamQueued(state.AUDIO.audioStream);
         if (queuedBytes < 0)
             queuedBytes = 0;
         size_t queuedBytesSize = (size_t)queuedBytes;

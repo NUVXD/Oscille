@@ -2,6 +2,7 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "UI.h"
 #include "appstate.h"
+#include <string.h>
 
 #define COLOR_GREEN 74,246,38,255
 
@@ -29,18 +30,48 @@ typedef struct {
 
 static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect *rect) {
     UI_Text->text = textString;
-    TTF_SetTextString(state->text, UI_Text->text, 0);
-    TTF_GetTextSize(state->text, &UI_Text->w, &UI_Text->h);
+    TTF_SetTextString(state->TEXT.text, UI_Text->text, 0);
+    TTF_GetTextSize(state->TEXT.text, &UI_Text->w, &UI_Text->h);
     UI_Text->x = (rect->x + (rect->w / 2)) - (UI_Text->w / 2);
     UI_Text->y = (rect->y + (rect->h / 2)) - (UI_Text->h / 2);
     /*
     if (UI_Text->h > rect->h)
         rect->h = UI_Text->h + 10.f;
     */
-    TTF_DrawRendererText(state->text, UI_Text->x, UI_Text->y);
+    TTF_DrawRendererText(state->TEXT.text, UI_Text->x, UI_Text->y);
 }
 
-char textAudioVolume[] = "Audio Device Volume";
+static void renderPathFieldText(appState *state, SDL_FRect *rect) {
+    const char *source = state->WAV.filePath;
+
+    char visibleText[APP_WAV_PATH_MAX + 4];
+    int textW = 0;
+    int textH = 0;
+    float textX;
+    float textY;
+
+    TTF_SetTextString(state->TEXT.text, source, 0);
+    TTF_GetTextSize(state->TEXT.text, &textW, &textH);
+
+    if ((float)textW > (rect->w - 10.f)) {
+        size_t srcLen = strlen(source);
+        size_t start = 0;
+
+        visibleText[0] = '\0';
+        for (start = 0; start < srcLen; start++) {
+            SDL_snprintf(visibleText, sizeof(visibleText), "...%s", source + start);
+            TTF_SetTextString(state->TEXT.text, visibleText, 0);
+            TTF_GetTextSize(state->TEXT.text, &textW, &textH);
+            if ((float)textW <= (rect->w - 10.f)) {
+                break;
+            }
+        }
+    }
+
+    textX = rect->x + 5.f;
+    textY = rect->y + ((rect->h - (float)textH) / 2.f);
+    TTF_DrawRendererText(state->TEXT.text, textX, textY);
+}
 
 static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
     return ((x >= button.x) &&
@@ -183,7 +214,7 @@ void updateScope(appState *state) {
 void updateSettings(appState *state) {
     //
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
-    TTF_SetTextColor(state->text, COLOR_GREEN);
+    TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
 
     // Settings Frame
     UI.settingsFrame = (SDL_FRect){
@@ -200,7 +231,7 @@ void updateSettings(appState *state) {
 
     float settingsFrameW = (UI.settingsFrame.w - 2); // "- 2" j for aesthetic purposes
     float settingsFrameX = (UI.settingsFrame.x + 1); // cuz the "- 2" above
-    TTF_SetTextWrapWidth(state->text, (int)settingsFrameW - 1);
+    TTF_SetTextWrapWidth(state->TEXT.text, (int)settingsFrameW - 1);
 
     // [ROW 0]
     // WAV filePath title
@@ -220,6 +251,7 @@ void updateSettings(appState *state) {
         .x = settingsFrameX,
         .y = (ROW_H * 0) + ROW_TITLE_H };
     SDL_RenderRect(state->renderer, &UI.fieldPath);
+    renderPathFieldText(state, &UI.fieldPath);
 
     // [ROW 1]
     // Controls title
@@ -283,7 +315,7 @@ void updateSettings(appState *state) {
     if (UI.btnVolume.w == 0) UI.btnVolume.w = 0.00001f;
     SDL_RenderRect(state->renderer, &UI.btnVolume);
     // ts is only UI representation of gain
-    float UIgain = state->volumeGain;
+    float UIgain = state->AUDIO.volumeGain;
     // clamps if for some reason < 0 || > 1
     if (UIgain < 0.f) UIgain = 0.f;
     if (UIgain > 1.f) UIgain = 1.f;

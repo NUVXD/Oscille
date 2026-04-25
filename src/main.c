@@ -53,20 +53,20 @@ static int appInit(appState *state) {
         return 2;
     }
     // create & check text engine
-    state->textEngine = TTF_CreateRendererTextEngine(state->renderer);
-    if (!state->textEngine) {
+    state->TEXT.textEngine = TTF_CreateRendererTextEngine(state->renderer);
+    if (!state->TEXT.textEngine) {
         SDL_Log("unable to create text engine: %s\n", SDL_GetError());
         return 2;
     }
     // init & check font
-    state->font = TTF_OpenFont("../assets/monospace.ttf", 15);
-    if (!state->font) {
+    state->TEXT.font = TTF_OpenFont("../assets/monospace.ttf", 15);
+    if (!state->TEXT.font) {
         SDL_Log("unable to load font: %s\n", SDL_GetError());
         return 2;
     }
     // init & check text object
-    state->text = TTF_CreateText(state->textEngine, state->font, "\0", 0);
-    if (!state->text) {
+    state->TEXT.text = TTF_CreateText(state->TEXT.textEngine, state->TEXT.font, "\0", 0);
+    if (!state->TEXT.text) {
         SDL_Log("unablel to create text object: %s\n", SDL_GetError());
         return 2;
     }
@@ -76,27 +76,27 @@ static int appInit(appState *state) {
 
     // inits various appState variables
     SDL_GetWindowSize(state->window, &state->width, &state->height);
-    state->volumeGain = 0.5f;
+    state->AUDIO.volumeGain = 0.5f;
 
     return 0;
 }
 
 static int appClose(appState *state) {
     if (state) {
-        if (state->audioStream)
-            SDL_DestroyAudioStream(state->audioStream);
-        if (state->wavBuffer)
-            free(state->wavBuffer);
+        if (state->AUDIO.audioStream)
+            SDL_DestroyAudioStream(state->AUDIO.audioStream);
+        if (state->WAV.wavBuffer)
+            free(state->WAV.wavBuffer);
         if (state->window)
             SDL_DestroyWindow(state->window);
         if (state->renderer)
             SDL_DestroyRenderer(state->renderer);
-        if (state->textEngine)
-            TTF_DestroyRendererTextEngine(state->textEngine);
-        if (state->font)
-            TTF_CloseFont(state->font);
-        if (state->text)
-            TTF_DestroyText(state->text);
+        if (state->TEXT.textEngine)
+            TTF_DestroyRendererTextEngine(state->TEXT.textEngine);
+        if (state->TEXT.font)
+            TTF_CloseFont(state->TEXT.font);
+        if (state->TEXT.text)
+            TTF_DestroyText(state->TEXT.text);
         free(state);
     }
     SDL_Quit();
@@ -143,10 +143,10 @@ int main(void) {
         // adds all the things to new frame
         updateScope(state); // updates scope surface
         updateSettings(state); // updates settings surface
-        if (state->wavBuffer) {
-            isError = doWave(state, state->header, state->wavBuffer);
+        if (state->WAV.wavBuffer) {
+            isError = doWave(state, state->WAV.header, state->WAV.wavBuffer);
             if (isError) {
-                SDL_Log("error while drawing waveform\n");
+                SDL_Log("critical error while drawing waveform or parsing WAV\n");
                 appClose(state);
                 return 2;
             }

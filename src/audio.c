@@ -2,76 +2,76 @@
 #include "appstate.h"
 
 void setGain(appState *state, float gain) {
-    if (state->audioStream && !SDL_SetAudioStreamGain(state->audioStream, gain))
+    if (state->AUDIO.audioStream && !SDL_SetAudioStreamGain(state->AUDIO.audioStream, gain))
         SDL_Log("unable to set audio stream gain: %s\n", SDL_GetError());
 }
 
 void initAudio(appState *state) {
-    uint16_t bitsPerSample = state->header.Format.bitsPerSample;
+    uint16_t bitsPerSample = state->WAV.header.Format.bitsPerSample;
     if (bitsPerSample == 16)
-        state->audioSpec.format = SDL_AUDIO_S16;
+        state->AUDIO.audioSpec.format = SDL_AUDIO_S16;
     else if (bitsPerSample == 32)
-        state->audioSpec.format = SDL_AUDIO_S32;
+        state->AUDIO.audioSpec.format = SDL_AUDIO_S32;
     else {
         SDL_Log("unsupported BitsPerSample\n");
         return;
     }
-    state->audioSpec.channels = (int)state->header.Format.channelsNumber;
-    state->audioSpec.freq = (int)state->header.Format.frequency;
+    state->AUDIO.audioSpec.channels = (int)state->WAV.header.Format.channelsNumber;
+    state->AUDIO.audioSpec.freq = (int)state->WAV.header.Format.frequency;
 
-    state->audioStream = SDL_OpenAudioDeviceStream(
+    state->AUDIO.audioStream = SDL_OpenAudioDeviceStream(
         SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, 
-        &state->audioSpec, 
+        &state->AUDIO.audioSpec,
         (void *)0, 
         (void *)0
     );
 
-    if (!state->audioStream) {
+    if (!state->AUDIO.audioStream) {
         SDL_Log("unable to open audio stream: %s\n", SDL_GetError());
-        if (state->wavBuffer) {
-            free(state->wavBuffer);
-            state->wavBuffer = (void *)0;
+        if (state->WAV.wavBuffer) {
+            free(state->WAV.wavBuffer);
+            state->WAV.wavBuffer = (void *)0;
         }
         return;
     }
 
-    setGain(state, state->volumeGain);
+    setGain(state, state->AUDIO.volumeGain);
 
-    if (!SDL_PutAudioStreamData(state->audioStream, state->wavBuffer + state->header.Data.dataStart, (int)state->header.Data.size)) {
+    if (!SDL_PutAudioStreamData(state->AUDIO.audioStream, state->WAV.wavBuffer + state->WAV.header.Data.dataStart, (int)state->WAV.header.Data.size)) {
         SDL_Log("unable to queue WAV data for playback: %s\n", SDL_GetError());
-        SDL_DestroyAudioStream(state->audioStream);
-        state->audioStream = (void *)0;
-        if (state->wavBuffer) {
-            free(state->wavBuffer);
-            state->wavBuffer = (void *)0;
+        SDL_DestroyAudioStream(state->AUDIO.audioStream);
+        state->AUDIO.audioStream = (void *)0;
+        if (state->WAV.wavBuffer) {
+            free(state->WAV.wavBuffer);
+            state->WAV.wavBuffer = (void *)0;
         }
         return;
     }
 
-    if (!SDL_ResumeAudioStreamDevice(state->audioStream)) {
+    if (!SDL_ResumeAudioStreamDevice(state->AUDIO.audioStream)) {
         SDL_Log("unable to start audio playback: %s\n", SDL_GetError());
-        SDL_DestroyAudioStream(state->audioStream);
-        state->audioStream = (void *)0;
-        if (state->wavBuffer) {
-            free(state->wavBuffer);
-            state->wavBuffer = (void *)0;
+        SDL_DestroyAudioStream(state->AUDIO.audioStream);
+        state->AUDIO.audioStream = (void *)0;
+        if (state->WAV.wavBuffer) {
+            free(state->WAV.wavBuffer);
+            state->WAV.wavBuffer = (void *)0;
         }
         return;
     }
 }
 
 void destroyAudio(appState *state) {
-    if (state->audioStream) {
-        SDL_DestroyAudioStream(state->audioStream);
-        state->audioStream = (void *)0;
+    if (state->AUDIO.audioStream) {
+        SDL_DestroyAudioStream(state->AUDIO.audioStream);
+        state->AUDIO.audioStream = (void *)0;
     }
 }
 
 void pauseAudio(appState *state) {
-    if (state->audioStream)
-        SDL_PauseAudioStreamDevice(state->audioStream);
+    if (state->AUDIO.audioStream)
+        SDL_PauseAudioStreamDevice(state->AUDIO.audioStream);
 }
 void resumeAudio(appState *state) {
-    if (state->audioStream)
-        SDL_ResumeAudioStreamDevice(state->audioStream);
+    if (state->AUDIO.audioStream)
+        SDL_ResumeAudioStreamDevice(state->AUDIO.audioStream);
 }

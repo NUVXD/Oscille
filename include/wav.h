@@ -29,7 +29,7 @@ typedef struct {
     } Data;
 } HEADER;
 
-extern int parseWAV(HEADER *header, uint8_t **wavBuffer);
+extern int parseWAV(const char *filePath, HEADER *header, uint8_t **wavBuffer);
 extern void freeWAV(uint8_t **wavBuffer);
 
 #endif

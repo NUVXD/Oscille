@@ -2,13 +2,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <limits.h>
 #include "SDL3/SDL.h"
 #include "WAV.h"
 
 // http://soundfile.sapp.org/doc/WaveFormat/
-
-#define MAX_FP_LEN 401U
 
 static uint16_t read16Bit(const uint8_t *buffer) { return (uint16_t)(buffer[0] | ((uint16_t)buffer[1] << 8)); }
 static uint32_t read32Bit(const uint8_t *buffer) { return (uint32_t)(buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24)); }
@@ -79,18 +76,12 @@ static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header
     return 1;
 }
 
-static _Bool loadWAV(FILE **wavFile, HEADER *header, uint8_t **buffer) {
+static _Bool loadWAV(const char *filePath, FILE **wavFile, HEADER *header, uint8_t **buffer) {
     _Bool isError;
     size_t fileBytes = 0;
-    char filePath[MAX_FP_LEN] = { 0 };
 
-    // will replace with UI field for filePath instead of stdin
-    printf("Input a WAV file:\n");
-    int doScan = scanf_s("%400s", filePath, MAX_FP_LEN);
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) {} // clears leftover chars in stdin, empty body -> char is ignored
-    if (doScan != 1) {
-        SDL_Log("unexpected error with chosen filePath\n");
+    if (!filePath || filePath[0] == '\0') {
+        SDL_Log("WAV file path is empty\n");
         return 1;
     }
     
@@ -164,11 +155,11 @@ void freeWAV(uint8_t **wavBuffer) {
     }
 }
 
-int parseWAV(HEADER *header, uint8_t **wavBuffer) {
+int parseWAV(const char *filePath, HEADER *header, uint8_t **wavBuffer) {
     FILE *wavFile = (void *)0;
     _Bool isError;
 
-    isError = loadWAV(&wavFile, header, wavBuffer);
+    isError = loadWAV(filePath, &wavFile, header, wavBuffer);
     if (isError) {
         SDL_Log("error with loadWAV function\n");
         return 1;
