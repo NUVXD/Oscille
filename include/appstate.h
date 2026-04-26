@@ -32,7 +32,8 @@ typedef struct appState {
     SDL_Window *window;
     SDL_Renderer *renderer;
     int width, height;
-    int scopeWidth, scopeHeight;
+    int scopeWidth, scopeHeight, scopeScale;
+    uint8_t _padding[4];
 
     appStateWAV WAV;
     appStateText TEXT;

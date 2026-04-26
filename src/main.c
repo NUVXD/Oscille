@@ -77,6 +77,7 @@ static int appInit(appState *state) {
     // inits various appState variables
     SDL_GetWindowSize(state->window, &state->width, &state->height);
     state->AUDIO.volumeGain = 0.5f;
+    state->scopeScale = 90;
 
     return 0;
 }

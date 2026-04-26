@@ -1,10 +1,10 @@
+#include <string.h>
 #include "SDL3/SDL.h"
 #include "WAV.h"
 #include "events.h"
 #include "appstate.h"
 #include "audio.h"
 #include "UI.h"
-#include <string.h>
 
 static void printDebugHeaderInfo(appState *state) {
     SDL_Log("\n");
@@ -135,8 +135,9 @@ int appEvents(appState *state, SDL_Event *event) {
                             // clamps if for some reason < 0 || > 1
                             if (gain < 0.f) gain = 0.f;
                             if (gain > 1.f) gain = 1.f;
-                            // QOL thresholds over which gain is intuitively muted or maximised
+                            // QOL thresholds over which gain is intuitively set
                             if (gain <= 0.05f) gain = 0.f;
+                            if (gain <= 0.525 && gain >= 0.475) gain = 0.5f;
                             if (gain >= 0.95f) gain = 1.f;
                             // UI will read from here
                             state->AUDIO.volumeGain = gain;
@@ -146,6 +147,18 @@ int appEvents(appState *state, SDL_Event *event) {
                         break;
                     }
                     case UI_FIELD_PATH:
+                        isFieldPathActive = 1;
+                        break;
+                    case UI_BTN_SCOPE_SCALE_NEG:
+                        SDL_Log("scope size neg button clicked\n");
+                        if (state->scopeScale > 0)
+                        state->scopeScale -= 1;
+                        break;
+                    case UI_BTN_SCOPE_SCALE_POS:
+                        SDL_Log("scope size pos button clicked\n");
+                        if (state->scopeScale < 100)
+                        state->scopeScale += 1;
+                        break;
                     case UI_BTN_NONE:
                     default:
                         isFieldPathActive = 0;
@@ -181,6 +194,8 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_RESUME:
                     case UI_BTN_VOLUME:
                     case UI_BTN_NONE:
+                    case UI_BTN_SCOPE_SCALE_NEG:
+                    case UI_BTN_SCOPE_SCALE_POS:
                     default:
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);

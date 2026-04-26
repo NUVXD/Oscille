@@ -9,7 +9,6 @@
 // - lower resolution of wave function as opposed to clamp/cap total points drawn <- big issue, ignoring for now
 
 #define _2PI (2 * SDL_PI_F)
-#define SCALE 90U // hard-coded for now, TODO as option (error case if < 0)
 #define MAX_SCOPE_POINTS 2048U // maximum possible number of total points per frame (pure cap, not sampling reduction)
 #define COLOR_GREEN 74,246,38,255
 
@@ -41,15 +40,17 @@ static _Bool whatFrame(appState state, HEADER header, size_t *startFrame, size_t
     return 0;
 }
 
-static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavBuffer) {
+static _Bool calcPoints(Wave *wave, appState *state, HEADER header, uint8_t *wavBuffer) {
     _Bool isError;
 
     // origins to center of scope canvas
-    int originX = state.scopeWidth / 2;  // canvas-width (x) center
-    int originY = state.scopeHeight / 2; // canvas-height (y) center
+    int originX = state->scopeWidth / 2;  // canvas-width (x) center
+    int originY = state->scopeHeight / 2; // canvas-height (y) center
 
     // scale/transform inits & checks
-    int TRANSFORM = ((state.scopeHeight / 2) * SCALE / 100);
+    if (state->scopeScale <= 0) state->scopeScale = 1;
+    if (state->scopeScale >= 100) state->scopeScale = 100;
+    int TRANSFORM = ((state->scopeHeight / 2) * state->scopeScale / 100);
     int maxScaleX = originX - 1;
     int maxScaleY = originY - 1;
     int maxScale = maxScaleY;
@@ -61,7 +62,7 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         TRANSFORM = maxScale;
 
     size_t startFrame, totalFrames;
-    isError = whatFrame(state, header, &startFrame, &totalFrames);
+    isError = whatFrame(*state, header, &startFrame, &totalFrames);
     if (isError) {
         SDL_Log("error with whatFrame function\n");
         return 1;
@@ -118,12 +119,12 @@ static _Bool calcPoints(Wave *wave, appState state, HEADER header, uint8_t *wavB
         // keeps points inside scope and makes sure > 0
         if (x < 0.0f)
             x = 0.0f;
-        else if (x > (float)(state.scopeWidth - 1))
-            x = (float)(state.scopeWidth - 1);
+        else if (x > (float)(state->scopeWidth - 1))
+            x = (float)(state->scopeWidth - 1);
         if (y < 0.0f)
             y = 0.0f;
-        else if (y > (float)(state.scopeHeight - 1))
-            y = (float)(state.scopeHeight - 1);
+        else if (y > (float)(state->scopeHeight - 1))
+            y = (float)(state->scopeHeight - 1);
 
         // populates points
         wave->points[i].x = x;
@@ -153,7 +154,7 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     if (isError)
         return 1;
 
-    isError = calcPoints(&wave, *state, header, wavBuffer);
+    isError = calcPoints(&wave, state, header, wavBuffer);
     if (isError)
         return 1;
 

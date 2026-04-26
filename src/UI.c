@@ -5,18 +5,44 @@
 #include <string.h>
 
 #define COLOR_GREEN 74,246,38,255
+#define COLOR_WHITE 255,255,255,255
+#define COLOR_BLACK 0,0,0,255
 
 typedef struct {
-    SDL_FRect scopeFrame;
-    SDL_FRect settingsFrame;
-    SDL_FRect titlePath;
-    SDL_FRect fieldPath;
-    SDL_FRect titleControls;
-    SDL_FRect btnPlay;
-    SDL_FRect btnPause;
-    SDL_FRect btnResume;
-    SDL_FRect titleVolume;
-    SDL_FRect btnVolume;
+    /* ----------- */
+    /*   BUTTONS   */
+    /* ----------- */
+    struct {
+        SDL_FRect wavPlay;
+        SDL_FRect wavPause;
+        SDL_FRect wavResume;
+        SDL_FRect wavVolume;
+
+        SDL_FRect scopeScaleNeg;
+        SDL_FRect scopeScalePos;
+    } buttons;
+
+    /* ---------- */
+    /*   TITLES   */
+    /* ---------- */
+    struct {
+        SDL_FRect wavSettings;
+        SDL_FRect wavFilePath;
+        SDL_FRect wavControls;
+        SDL_FRect wavVolume;
+
+        SDL_FRect scopeSettings;
+        SDL_FRect scopeScale;
+    } titles;
+
+    /* ---------- */
+    /*   FIELDS   */
+    /* ---------- */
+    struct {
+        SDL_FRect wavFilePath;
+        SDL_FRect scopeScale;
+    } fields;
+    //
 } UI_ELEMENTS;
 static UI_ELEMENTS UI;
 
@@ -28,17 +54,18 @@ typedef struct {
     float y;
 } UI_TEXT;
 
-static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect *rect) {
+static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect rect) {
     UI_Text->text = textString;
+    TTF_SetFontStyle(state->TEXT.font, TTF_STYLE_BOLD);
     TTF_SetTextString(state->TEXT.text, UI_Text->text, 0);
     TTF_GetTextSize(state->TEXT.text, &UI_Text->w, &UI_Text->h);
-    UI_Text->x = (rect->x + (rect->w / 2)) - (UI_Text->w / 2);
-    UI_Text->y = (rect->y + (rect->h / 2)) - (UI_Text->h / 2);
-    /*
-    if (UI_Text->h > rect->h)
-        rect->h = UI_Text->h + 10.f;
-    */
+    UI_Text->x = (rect.x + (rect.w / 2)) - (UI_Text->w / 2);
+    UI_Text->y = (rect.y + (rect.h / 2)) - (UI_Text->h / 2);
+    // keeps them from overlapping on the left
+    if (UI_Text->x < rect.x + 5.f)
+        UI_Text->x = rect.x + 5.f;
     TTF_DrawRendererText(state->TEXT.text, UI_Text->x, UI_Text->y);
+    TTF_SetFontStyle(state->TEXT.font, TTF_STYLE_NORMAL);
 }
 
 static void renderPathFieldText(appState *state, SDL_FRect *rect) {
@@ -74,10 +101,10 @@ static void renderPathFieldText(appState *state, SDL_FRect *rect) {
 }
 
 static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
-    return ((x >= button.x) &&
-        (x <= (button.x + button.w)) &&
-        (y >= button.y) &&
-        (y <= (button.y + button.h)));
+    _Bool isX = (x >= button.x) && (x <= (button.x + button.w));
+    _Bool isY = (y >= button.y) && (y <= (button.y + button.h));
+    _Bool isTrue = isX && isY;
+    return isTrue;
 }
 
 static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
@@ -188,172 +215,339 @@ static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
             break;
         }
 
+        case UI_BTN_SCOPE_SCALE_NEG: {
+            int pointCount = 2;
+            SDL_FPoint points[2];
+            if (btnHalfWidth >= 10.f) {
+                points[0].x = btnCenterX - 4.f;
+                points[1].x = btnCenterX + 4.f;
+            }
+            else {
+                points[0].x = btnCenterX - (btnHalfWidth * 0.3f);
+                points[1].x = btnCenterX + (btnHalfWidth * 0.3f);
+            }
+            points[0].y = btnCenterY;
+            points[1].y = btnCenterY;
+            SDL_RenderLines(state->renderer, points, pointCount);
+            break;
+        }
+
+        case UI_BTN_SCOPE_SCALE_POS: {
+            int pointCount = 2;
+            SDL_FPoint pointsH[2];
+            SDL_FPoint pointsV[2];
+            if (btnHalfWidth >= 10.f) {
+                // horizontal bar
+                pointsH[0].x = btnCenterX - 4.f;
+                pointsH[0].y = btnCenterY;
+                pointsH[1].x = btnCenterX + 4.f;
+                pointsH[1].y = btnCenterY;
+                // vertical bar
+                pointsV[0].x = btnCenterX;
+                pointsV[0].y = btnCenterY - 4.f;
+                pointsV[1].x = btnCenterX;
+                pointsV[1].y = btnCenterY + 4.f;
+            }
+            else {
+                pointsH[0].x = btnCenterX - (btnHalfWidth * 0.3f);
+                pointsH[0].y = btnCenterY;
+                pointsH[1].x = btnCenterX + (btnHalfWidth * 0.3f);
+                pointsH[1].y = btnCenterY;
+                // vertical bar
+                pointsV[0].x = btnCenterX;
+                pointsV[0].y = btnCenterY - (btnHalfWidth * 0.3f);
+                pointsV[1].x = btnCenterX;
+                pointsV[1].y = btnCenterY + (btnHalfWidth * 0.3f);
+            }
+            SDL_RenderLines(state->renderer, pointsH, pointCount);
+            SDL_RenderLines(state->renderer, pointsV, pointCount);
+            break;
+        }
+
         case UI_BTN_NONE:
         case UI_BTN_VOLUME:
         case UI_FIELD_PATH:
         default:
             break;
     }
-};
+}
 
 void updateScope(appState *state) {
-    //
+    /* ------------------------------ */
+    /*   Initial Rendering Settings   */
+    /* ------------------------------ */
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
 
-    // Frame
-    UI.scopeFrame = (SDL_FRect){
+    /* -------------------- */
+    /*   Main Scope Frame   */
+    /* -------------------- */
+    SDL_FRect scopeFrame = {
         .w = (float)(state->width * 3 / 4),
         .h = (float)state->height,
         .x = 0.f,
         .y = 0.f };
-    state->scopeHeight = (int)UI.scopeFrame.h;
-    state->scopeWidth = (int)UI.scopeFrame.w;
-    SDL_RenderRect(state->renderer, &UI.scopeFrame);
+    state->scopeHeight = (int)scopeFrame.h - 1; // - 1 for safety due to type conversion
+    state->scopeWidth = (int)scopeFrame.w - 1; // - 1 for safety due to type conversion
+    SDL_RenderRect(state->renderer, &scopeFrame);
 }
 
 void updateSettings(appState *state) {
-    //
+    /* ------------------------------ */
+    /*   Initial Rendering Settings   */
+    /* ------------------------------ */
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
     TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
 
-    // Settings Frame
-    UI.settingsFrame = (SDL_FRect){
+    /* --------------------- */
+    /*   Default Variables   */
+    /* --------------------- */
+    float SECTION_H = 35.f;
+    float ROW_TITLE_H = 20.f; // default title height in row
+    float ROW_ELEMENT_H = 35.f; // default element height in row
+    float ROW_H = ROW_TITLE_H + ROW_ELEMENT_H; // row height
+    float settingsFrameW;
+    float settingsFrameX;
+
+    /* ----------------------- */
+    /*   Main Settings Frame   */
+    /* ----------------------- */
+    SDL_FRect settingsFrame = {
         .h = (float)state->height,
         .w = (float)(state->width - state->scopeWidth),
         .x = (float)state->scopeWidth,
         .y = 0.f };
-    SDL_RenderRect(state->renderer, &UI.settingsFrame);
+    settingsFrameW = settingsFrame.w - 2; // "- 2" j for aesthetic purposes
+    settingsFrameX = settingsFrame.x + 1; // cuz the "- 2" above
+    SDL_RenderRect(state->renderer, &settingsFrame);
 
-    // Default Variables
-    float ROW_TITLE_H = 20.f; // default title height in row
-    float ROW_ELEMENT_H = 35.f; // default element height in row
-    float ROW_H = ROW_TITLE_H + ROW_ELEMENT_H; // row height
-
-    float settingsFrameW = (UI.settingsFrame.w - 2); // "- 2" j for aesthetic purposes
-    float settingsFrameX = (UI.settingsFrame.x + 1); // cuz the "- 2" above
-    TTF_SetTextWrapWidth(state->TEXT.text, (int)settingsFrameW - 1);
-
+    /* -------------------------- */
+    /*   Settings Rows Elements   */
+    /* -------------------------- */
     // [ROW 0]
-    // WAV filePath title
-    UI.titlePath = (SDL_FRect){
-    .h = ROW_TITLE_H,
-    .w = settingsFrameW / 1,
-    .x = settingsFrameX,
-    .y = (ROW_H * 0) };
-    UI_TEXT titleWAVPath;
-    renderTitle(state, &titleWAVPath, "WAV File Path", &UI.titlePath);
-    SDL_RenderRect(state->renderer, &UI.titlePath);
-
-    // WAV filePath field
-    UI.fieldPath = (SDL_FRect){
-        .h = ROW_ELEMENT_H,
+    // WAV Section Title
+    SDL_FRect *ttlWavSettings = &UI.titles.wavSettings;
+    *ttlWavSettings = (SDL_FRect){
+        .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = (ROW_H * 0) + ROW_TITLE_H };
-    SDL_RenderRect(state->renderer, &UI.fieldPath);
-    renderPathFieldText(state, &UI.fieldPath);
+        .y = (ROW_H * 0) };
+    UI_TEXT titleWAVSettings;
+    SDL_RenderFillRect(state->renderer, ttlWavSettings);
+    TTF_SetTextColor(state->TEXT.text, COLOR_BLACK);
+    renderTitle(state, &titleWAVSettings, "WAV Settings", *ttlWavSettings);
+    TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
 
     // [ROW 1]
-    // Controls title
-    UI.titleControls = (SDL_FRect){
+    // WAV File Path Title
+    SDL_FRect *ttlFilePath = &UI.titles.wavFilePath;
+    *ttlFilePath = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = (ROW_H * 1) };
-    UI_TEXT titleWAVControls;
-    renderTitle(state, &titleWAVControls, "WAV Audio Controls", &UI.titleControls);
-    SDL_RenderRect(state->renderer, &UI.titleControls);
-
-    // Play button
-    UI.btnPlay = (SDL_FRect){
+        .y = (ROW_H * 1) - SECTION_H };
+    UI_TEXT titleWAVPath;
+    renderTitle(state, &titleWAVPath, "WAV File Path", *ttlFilePath);
+    SDL_RenderRect(state->renderer, ttlFilePath);
+    // WAV File Path Field
+    SDL_FRect *fldFilePath = &UI.fields.wavFilePath;
+    *fldFilePath = (SDL_FRect){
         .h = ROW_ELEMENT_H,
-        .w = settingsFrameW / 3,
+        .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = (ROW_H * 1) + ROW_TITLE_H };
-    SDL_RenderRect(state->renderer, &UI.btnPlay);
-    drawSymbol(state, UI_BTN_PLAY, UI.btnPlay);
-    // Pause button
-    UI.btnPause = (SDL_FRect){
-        .h = ROW_ELEMENT_H,
-        .w = settingsFrameW / 3,
-        .x = UI.btnPlay.x + UI.btnPlay.w, // to the right of Play Btn
-        .y = (ROW_H * 1) + ROW_TITLE_H };
-    SDL_RenderRect(state->renderer, &UI.btnPause);
-    drawSymbol(state, UI_BTN_PAUSE, UI.btnPause);
-    // Resume button
-    UI.btnResume = (SDL_FRect){
-        .h = ROW_ELEMENT_H,
-        .w = settingsFrameW / 3, // to the right of Pause Btn
-        .x = UI.btnPause.x + UI.btnPause.w,
-        .y = (ROW_H * 1) + ROW_TITLE_H };
-    SDL_RenderRect(state->renderer, &UI.btnResume);
-    drawSymbol(state, UI_BTN_RESUME, UI.btnResume);
+        .y = (ROW_H * 1) + ROW_TITLE_H - SECTION_H };
+    SDL_RenderRect(state->renderer, fldFilePath);
+    renderPathFieldText(state, fldFilePath);
 
     // [ROW 2]
-    // Volume title
-    UI.titleVolume = (SDL_FRect){
+    // Controls Title
+    SDL_FRect *ttlControls = &UI.titles.wavControls;
+    *ttlControls = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = (ROW_H * 2) };
-    UI_TEXT titleAudioVolume;
-    renderTitle(state, &titleAudioVolume, "WAV Audio Volume", &UI.titleVolume);
-    SDL_RenderRect(state->renderer, &UI.titleVolume);
+        .y = (ROW_H * 2) - SECTION_H };
+    UI_TEXT titleWAVControls;
+    renderTitle(state, &titleWAVControls, "WAV Audio Controls", *ttlControls);
+    SDL_RenderRect(state->renderer, ttlControls);
+    // Play Button
+    SDL_FRect *btnPlay = &UI.buttons.wavPlay;
+    *btnPlay = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 3,
+        .x = settingsFrameX,
+        .y = (ROW_H * 2) + ROW_TITLE_H - SECTION_H };
+    SDL_RenderRect(state->renderer, btnPlay);
+    drawSymbol(state, UI_BTN_PLAY, *btnPlay);
+    // Pause Button
+    SDL_FRect *btnPause = &UI.buttons.wavPause;
+    *btnPause = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 3,
+        .x = btnPlay->x + btnPlay->w, // to the right of Play Btn
+        .y = (ROW_H * 2) + ROW_TITLE_H - SECTION_H };
+    SDL_RenderRect(state->renderer, btnPause);
+    drawSymbol(state, UI_BTN_PAUSE, *btnPause);
+    // Resume Button
+    SDL_FRect *btnResume = &UI.buttons.wavResume;
+    *btnResume = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 3, // to the right of Pause Btn
+        .x = btnPause->x + btnPause->w,
+        .y = (ROW_H * 2) + ROW_TITLE_H - SECTION_H };
+    SDL_RenderRect(state->renderer, btnResume);
+    drawSymbol(state, UI_BTN_RESUME, *btnResume);
 
-    // Volume slider
+    // [ROW 3]
+    // Volume Title
+    SDL_FRect *ttlVolume = &UI.titles.wavVolume;
+    *ttlVolume = (SDL_FRect){
+        .h = ROW_TITLE_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (ROW_H * 3) - SECTION_H };
+    UI_TEXT titleAudioVolume;
+    renderTitle(state, &titleAudioVolume, "WAV Audio Volume", *ttlVolume);
+    SDL_RenderRect(state->renderer, ttlVolume);
+    // Volume Button Slider
     SDL_FRect volFrameBig = {
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = (ROW_H * 2) + ROW_TITLE_H };
+        .y = (ROW_H * 3) + ROW_TITLE_H - SECTION_H };
     SDL_RenderRect(state->renderer, &volFrameBig);
-    UI.btnVolume = (SDL_FRect){
+    SDL_FRect *btnVolume = &UI.buttons.wavVolume;
+    *btnVolume = (SDL_FRect){
         .h = volFrameBig.h / 2,
         .w = volFrameBig.w - 20.f,
         .x = volFrameBig.x + 10.f,
         .y = volFrameBig.y + (volFrameBig.h / 4) };
-    if (UI.btnVolume.w == 0) UI.btnVolume.w = 0.00001f;
-    SDL_RenderRect(state->renderer, &UI.btnVolume);
+    if (btnVolume->w == 0) btnVolume->w = 0.00001f;
+    SDL_RenderRect(state->renderer, btnVolume);
     // ts is only UI representation of gain
     float UIgain = state->AUDIO.volumeGain;
     // clamps if for some reason < 0 || > 1
     if (UIgain < 0.f) UIgain = 0.f;
     if (UIgain > 1.f) UIgain = 1.f;
     SDL_FRect volBar = {
-        .h = UI.btnVolume.h,
-        .w = UI.btnVolume.w * UIgain,
-        .x = UI.btnVolume.x,
-        .y = UI.btnVolume.y };
+        .h = btnVolume->h,
+        .w = btnVolume->w * UIgain,
+        .x = btnVolume->x,
+        .y = btnVolume->y };
     if (volBar.w == 0) volBar.w = 0.00001f;
     SDL_RenderFillRect(state->renderer, &volBar);
+
+    // [ROW 4]
+    // Scope Section Title
+    SDL_FRect *ttlScopeSettings = &UI.titles.scopeSettings;
+    *ttlScopeSettings = (SDL_FRect){
+        .h = ROW_TITLE_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (ROW_H * 4) - SECTION_H };
+    UI_TEXT titleScopeSettings;
+    SDL_RenderFillRect(state->renderer, ttlScopeSettings);
+    TTF_SetTextColor(state->TEXT.text, COLOR_BLACK);
+    renderTitle(state, &titleScopeSettings, "Scope Settings", *ttlScopeSettings);
+    TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
+
+    // [ROW 5]
+    // Scope Size Title
+    SDL_FRect *ttlscopeScale = &UI.titles.scopeScale;
+    *ttlscopeScale = (SDL_FRect){
+        .h = ROW_TITLE_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (ROW_H * 5) - SECTION_H * 2 };
+    UI_TEXT titlescopeScale;
+    renderTitle(state, &titlescopeScale, "Scope Size", *ttlscopeScale);
+    SDL_RenderRect(state->renderer, ttlscopeScale);
+    // Scope Size Frame
+    SDL_FRect scopeScaleFrame = {
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = (ROW_H * 5) + ROW_TITLE_H - SECTION_H * 2 };
+    SDL_RenderRect(state->renderer, &scopeScaleFrame);
+    // Scope Size Value Display
+    SDL_FRect *scopeScaleVal = &UI.fields.scopeScale;
+    *scopeScaleVal = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.60f),
+        .x = settingsFrameX + ((settingsFrameW / 2) - ((settingsFrameW * 0.60f) / 2)),
+        .y = (ROW_H * 5) + ROW_TITLE_H - SECTION_H * 2 };
+    UI_TEXT textScopeScaleVal;
+    char scaleValue[4];
+    SDL_snprintf(scaleValue, 4, "%i", state->scopeScale);
+    renderTitle(state, &textScopeScaleVal, scaleValue, *scopeScaleVal);
+    SDL_RenderRect(state->renderer, scopeScaleVal);
+    // Scope Size Negative Button
+    SDL_FRect *scopeScaleNeg = &UI.buttons.scopeScaleNeg;
+    *scopeScaleNeg = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.20f),
+        .x = settingsFrameX,
+        .y = (ROW_H * 5) + ROW_TITLE_H - SECTION_H * 2 };
+    SDL_RenderRect(state->renderer, scopeScaleNeg);
+    drawSymbol(state, UI_BTN_SCOPE_SCALE_NEG, *scopeScaleNeg);
+    // Scope Size Positive Button
+    SDL_FRect *scopeScalePos = &UI.buttons.scopeScalePos;
+    *scopeScalePos = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.20f),
+        .x = scopeScaleVal->x + scopeScaleVal->w,
+        .y = (ROW_H * 5) + ROW_TITLE_H - SECTION_H * 2 };
+    SDL_RenderRect(state->renderer, scopeScalePos);
+    drawSymbol(state, UI_BTN_SCOPE_SCALE_POS, *scopeScalePos);
 }
 
 UI_BUTTONS getUIButtonEnum(float x, float y) {
-    if (isMouseInButton(x, y, UI.fieldPath))
+    if (isMouseInButton(x, y, UI.fields.wavFilePath))
         return UI_FIELD_PATH;
-    if (isMouseInButton(x, y, UI.btnPlay))
+
+    if (isMouseInButton(x, y, UI.buttons.wavPlay))
         return UI_BTN_PLAY;
-    if (isMouseInButton(x, y, UI.btnPause))
+
+    if (isMouseInButton(x, y, UI.buttons.wavPause))
         return UI_BTN_PAUSE;
-    if (isMouseInButton(x, y, UI.btnResume))
+
+    if (isMouseInButton(x, y, UI.buttons.wavResume))
         return UI_BTN_RESUME;
-    if (isMouseInButton(x, y, UI.btnVolume))
+
+    if (isMouseInButton(x, y, UI.buttons.wavVolume))
         return UI_BTN_VOLUME;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeScaleNeg))
+        return UI_BTN_SCOPE_SCALE_NEG;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeScalePos))
+        return UI_BTN_SCOPE_SCALE_POS;
+
     return UI_BTN_NONE;
 }
 
 SDL_FRect getUIButtonRect(UI_BUTTONS button) {
     switch (button) {
-        case UI_BTN_VOLUME:
-            return UI.btnVolume;
         case UI_FIELD_PATH:
-            return UI.fieldPath;
+            return UI.fields.wavFilePath;
+
         case UI_BTN_PLAY:
-            return UI.btnPlay;
+            return UI.buttons.wavPlay;
+
         case UI_BTN_PAUSE:
-            return UI.btnPause;
+            return UI.buttons.wavPause;
+
         case UI_BTN_RESUME:
-            return UI.btnResume;
+            return UI.buttons.wavResume;
+
+        case UI_BTN_VOLUME:
+            return UI.buttons.wavVolume;
+
+        case UI_BTN_SCOPE_SCALE_NEG:
+            return UI.buttons.scopeScaleNeg;
+
+        case UI_BTN_SCOPE_SCALE_POS:
+            return UI.buttons.scopeScalePos;
+
         case UI_BTN_NONE:
             break;
     }

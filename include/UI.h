@@ -9,7 +9,9 @@ typedef enum {
     UI_BTN_PLAY,
     UI_BTN_PAUSE,
     UI_BTN_RESUME,
-	UI_BTN_VOLUME
+	UI_BTN_VOLUME,
+    UI_BTN_SCOPE_SCALE_NEG,
+    UI_BTN_SCOPE_SCALE_POS,
 } UI_BUTTONS;
 
 extern void updateScope(struct appState *state);
