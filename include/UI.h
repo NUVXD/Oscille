@@ -3,7 +3,7 @@
 
 struct appState;
 
-typedef enum {
+typedef enum UI_BUTTONS {
     UI_BTN_NONE,
     UI_FIELD_PATH,
     UI_BTN_PLAY,

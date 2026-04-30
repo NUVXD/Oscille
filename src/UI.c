@@ -504,14 +504,6 @@ void updateSettings(appState *state) {
     renderTitle(state, &titlescopeScale, "Scope Scale", *ttlScopeScale);
     SDL_RenderRect(state->renderer, ttlScopeScale);
 
-    // Scope Size Frame
-    SDL_FRect scopeScaleFrame = {
-        .h = ROW_ELEMENT_H,
-        .w = settingsFrameW / 1,
-        .x = settingsFrameX,
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, &scopeScaleFrame);
-
     // Scope Size Value Display
     SDL_FRect *scopeScaleVal = &UI.fields.scopeScale;
     *scopeScaleVal = (SDL_FRect){
@@ -559,14 +551,6 @@ void updateSettings(appState *state) {
     UI_TEXT titleScopeMaxPoints;
     renderTitle(state, &titleScopeMaxPoints, "Max Points", *ttlScopeMaxPoints);
     SDL_RenderRect(state->renderer, ttlScopeMaxPoints);
-
-    // Scope Max Points Frame
-    SDL_FRect scopeMaxPointsFrame = {
-        .h = ROW_ELEMENT_H,
-        .w = settingsFrameW / 1,
-        .x = settingsFrameX,
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, &scopeMaxPointsFrame);
 
     // Scope Max Points Value Display
     SDL_FRect *scopeMaxPointsVal = &UI.fields.scopeMaxPoints;
@@ -649,37 +633,26 @@ void updateSettings(appState *state) {
 UI_BUTTONS getUIButtonEnum(float x, float y) {
     if (isMouseInButton(x, y, UI.fields.wavFilePath))
         return UI_FIELD_PATH;
-
     if (isMouseInButton(x, y, UI.buttons.wavPlay))
         return UI_BTN_PLAY;
-
     if (isMouseInButton(x, y, UI.buttons.wavPause))
         return UI_BTN_PAUSE;
-
     if (isMouseInButton(x, y, UI.buttons.wavResume))
         return UI_BTN_RESUME;
-
     if (isMouseInButton(x, y, UI.buttons.wavVolume))
         return UI_BTN_VOLUME;
-
     if (isMouseInButton(x, y, UI.buttons.scopeScaleNeg))
         return UI_BTN_SCOPE_SCALE_NEG;
-
     if (isMouseInButton(x, y, UI.buttons.scopeScalePos))
         return UI_BTN_SCOPE_SCALE_POS;
-
     if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsNeg))
         return UI_BTN_SCOPE_MAX_POINTS_NEG;
-
     if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsPos))
         return UI_BTN_SCOPE_MAX_POINTS_POS;
-
     if (isMouseInButton(x, y, UI.buttons.scopeModePoints))
         return UI_BTN_SCOPE_MODE_POINTS;
-
     if (isMouseInButton(x, y, UI.buttons.scopeModeLines))
         return UI_BTN_SCOPE_MODE_LINES;
-
     return UI_BTN_NONE;
 }
 
@@ -687,37 +660,26 @@ SDL_FRect getUIButtonRect(UI_BUTTONS button) {
     switch (button) {
         case UI_FIELD_PATH:
             return UI.fields.wavFilePath;
-
         case UI_BTN_PLAY:
             return UI.buttons.wavPlay;
-
         case UI_BTN_PAUSE:
             return UI.buttons.wavPause;
-
         case UI_BTN_RESUME:
             return UI.buttons.wavResume;
-
         case UI_BTN_VOLUME:
             return UI.buttons.wavVolume;
-
         case UI_BTN_SCOPE_SCALE_NEG:
             return UI.buttons.scopeScaleNeg;
-
         case UI_BTN_SCOPE_SCALE_POS:
             return UI.buttons.scopeScalePos;
-
         case UI_BTN_SCOPE_MAX_POINTS_NEG:
             return UI.buttons.scopeMaxPointsNeg;
-
         case UI_BTN_SCOPE_MAX_POINTS_POS:
             return UI.buttons.scopeMaxPointsPos;
-
         case UI_BTN_SCOPE_MODE_POINTS:
             return UI.buttons.scopeModePoints;
-
         case UI_BTN_SCOPE_MODE_LINES:
             return UI.buttons.scopeModeLines;
-
         case UI_BTN_NONE:
             break;
     }
