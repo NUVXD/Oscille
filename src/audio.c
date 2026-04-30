@@ -8,13 +8,16 @@ void setGain(appState *state, float gain) {
 
 void initAudio(appState *state) {
     uint16_t bitsPerSample = state->WAV.header.Format.bitsPerSample;
-    if (bitsPerSample == 16)
-        state->AUDIO.audioSpec.format = SDL_AUDIO_S16;
-    else if (bitsPerSample == 32)
-        state->AUDIO.audioSpec.format = SDL_AUDIO_S32;
-    else {
-        SDL_Log("unsupported BitsPerSample\n");
-        return;
+    switch (bitsPerSample) {
+        case 16:
+            state->AUDIO.audioSpec.format = SDL_AUDIO_S16;
+            break;
+        case 32:
+            state->AUDIO.audioSpec.format = SDL_AUDIO_S32;
+            break;
+        default:
+            SDL_Log("unsupported BitsPerSample\n");
+            return;
     }
     state->AUDIO.audioSpec.channels = (int)state->WAV.header.Format.channelsNumber;
     state->AUDIO.audioSpec.freq = (int)state->WAV.header.Format.frequency;

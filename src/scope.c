@@ -12,8 +12,15 @@
 #define MAX_SCOPE_POINTS 2048U // maximum possible number of total points per frame (pure cap, not sampling reduction)
 #define COLOR_GREEN 74,246,38,255
 
-static uint16_t read16Bit(const uint8_t *buffer) { return (uint16_t)(buffer[0] | ((uint16_t)buffer[1] << 8)); }
-static uint32_t read32Bit(const uint8_t *buffer) { return (uint32_t)(buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24)); }
+static uint16_t read16Bit(const uint8_t *buffer) {
+    uint16_t value = (buffer[0] | ((uint16_t)buffer[1] << 8));
+    return value;
+}
+
+static uint32_t read32Bit(const uint8_t *buffer) {
+    uint32_t value = (buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24));
+    return value;
+}
 
 static _Bool whatFrame(appState state, HEADER header, size_t *startFrame, size_t *totalFrames) {
     size_t playedFrame = 0;
@@ -44,13 +51,13 @@ static _Bool calcPoints(Wave *wave, appState *state, HEADER header, uint8_t *wav
     _Bool isError;
 
     // origins to center of scope canvas
-    int originX = state->scopeWidth / 2;  // canvas-width (x) center
-    int originY = state->scopeHeight / 2; // canvas-height (y) center
+    int originX = state->SCOPE.width / 2;  // canvas-width (x) center
+    int originY = state->SCOPE.height / 2; // canvas-height (y) center
 
     // scale/transform inits & checks
-    if (state->scopeScale <= 0) state->scopeScale = 1;
-    if (state->scopeScale >= 100) state->scopeScale = 100;
-    int TRANSFORM = ((state->scopeHeight / 2) * state->scopeScale / 100);
+    if (state->SCOPE.scale <= 0) state->SCOPE.scale = 1;
+    if (state->SCOPE.scale >= 100) state->SCOPE.scale = 100;
+    int TRANSFORM = ((state->SCOPE.height / 2) * state->SCOPE.scale / 100);
     int maxScaleX = originX - 1;
     int maxScaleY = originY - 1;
     int maxScale = maxScaleY;
@@ -119,12 +126,12 @@ static _Bool calcPoints(Wave *wave, appState *state, HEADER header, uint8_t *wav
         // keeps points inside scope and makes sure > 0
         if (x < 0.0f)
             x = 0.0f;
-        else if (x > (float)(state->scopeWidth - 1))
-            x = (float)(state->scopeWidth - 1);
+        else if (x > (float)(state->SCOPE.width - 1))
+            x = (float)(state->SCOPE.width - 1);
         if (y < 0.0f)
             y = 0.0f;
-        else if (y > (float)(state->scopeHeight - 1))
-            y = (float)(state->scopeHeight - 1);
+        else if (y > (float)(state->SCOPE.height - 1))
+            y = (float)(state->SCOPE.height - 1);
 
         // populates points
         wave->points[i].x = x;
@@ -134,10 +141,10 @@ static _Bool calcPoints(Wave *wave, appState *state, HEADER header, uint8_t *wav
     return 0;
 }
 
-static int initWave(Wave *wave, HEADER header) {
+static int initWave(appState *state, Wave *wave, HEADER header) {
     wave->pointCount = header.Format.frequency;
-    if (wave->pointCount > MAX_SCOPE_POINTS)
-        wave->pointCount = MAX_SCOPE_POINTS;
+    if (wave->pointCount > state->SCOPE.maxPoints)
+        wave->pointCount = state->SCOPE.maxPoints;
     if (wave->pointCount == 0)
         return 1;
     wave->points = SDL_malloc(sizeof(SDL_FPoint) * wave->pointCount);
@@ -150,7 +157,7 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     Wave wave;
     _Bool isError;
 
-    isError = initWave(&wave, header);
+    isError = initWave(state, &wave, header);
     if (isError)
         return 1;
 
@@ -158,11 +165,14 @@ int doWave(appState *state, HEADER header, uint8_t *wavBuffer) {
     if (isError)
         return 1;
 
-    // draw points
+    // draw points/lines
     SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
     if (wave.pointCount > INT_MAX)
         return 1;
-    SDL_RenderPoints(state->renderer, wave.points, (int)wave.pointCount);
+    if (state->SCOPE.mode == 0)
+        SDL_RenderPoints(state->renderer, wave.points, (int)wave.pointCount);
+    else if (state->SCOPE.mode == 1)
+        SDL_RenderLines(state->renderer, wave.points, (int)wave.pointCount);
 
     SDL_free(wave.points);
 

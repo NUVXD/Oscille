@@ -26,18 +26,27 @@ typedef struct appStateWAV {
     uint8_t _padding[7];
 } appStateWAV;
 
+typedef struct appStateScope {
+    int width;
+    int height;
+    int scale;
+    int mode;
+    unsigned int maxPoints;
+} appStateScope;
+
 // APPSTATE STRUCT
 // - owns all persistent runtime state.
 typedef struct appState {
     SDL_Window *window;
     SDL_Renderer *renderer;
     int width, height;
-    int scopeWidth, scopeHeight, scopeScale;
-    uint8_t _padding[4];
 
     appStateWAV WAV;
     appStateText TEXT;
     appStateAudio AUDIO;
+    appStateScope SCOPE;
+    
+    uint8_t _padding[4];
 } appState;
 
 #endif

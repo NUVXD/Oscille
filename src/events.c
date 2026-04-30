@@ -151,13 +151,30 @@ int appEvents(appState *state, SDL_Event *event) {
                         break;
                     case UI_BTN_SCOPE_SCALE_NEG:
                         SDL_Log("scope size neg button clicked\n");
-                        if (state->scopeScale > 0)
-                        state->scopeScale -= 1;
+                        if (state->SCOPE.scale > 0)
+                            state->SCOPE.scale -= 1;
                         break;
                     case UI_BTN_SCOPE_SCALE_POS:
                         SDL_Log("scope size pos button clicked\n");
-                        if (state->scopeScale < 100)
-                        state->scopeScale += 1;
+                        if (state->SCOPE.scale < 100)
+                            state->SCOPE.scale += 1;
+                        break;
+                    case UI_BTN_SCOPE_MAX_POINTS_NEG:
+                        SDL_Log("scope max points neg button clicked\n");
+                        if (state->SCOPE.maxPoints > 1)
+                            state->SCOPE.maxPoints -= 1;
+                        break;
+                    case UI_BTN_SCOPE_MAX_POINTS_POS:
+                        SDL_Log("scope max points pos button clicked\n");
+                        state->SCOPE.maxPoints += 1;
+                        break;
+                    case UI_BTN_SCOPE_MODE_POINTS:
+                        SDL_Log("scope mode (points) button clicked\n");
+                        state->SCOPE.mode = 0;
+                        break;
+                    case UI_BTN_SCOPE_MODE_LINES:
+                        SDL_Log("scope mode (lines) button clicked\n");
+                        state->SCOPE.mode = 1;
                         break;
                     case UI_BTN_NONE:
                     default:
@@ -196,6 +213,10 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_NONE:
                     case UI_BTN_SCOPE_SCALE_NEG:
                     case UI_BTN_SCOPE_SCALE_POS:
+                    case UI_BTN_SCOPE_MAX_POINTS_NEG:
+                    case UI_BTN_SCOPE_MAX_POINTS_POS:
+                    case UI_BTN_SCOPE_MODE_POINTS:
+                    case UI_BTN_SCOPE_MODE_LINES:
                     default:
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);

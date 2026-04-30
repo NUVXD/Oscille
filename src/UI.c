@@ -25,6 +25,10 @@ typedef struct {
 
         SDL_FRect scopeScaleNeg;
         SDL_FRect scopeScalePos;
+        SDL_FRect scopeMaxPointsNeg;
+        SDL_FRect scopeMaxPointsPos;
+        SDL_FRect scopeModePoints;
+        SDL_FRect scopeModeLines;
     } buttons;
 
     /* ---------- */
@@ -38,6 +42,8 @@ typedef struct {
 
         SDL_FRect scopeSettings;
         SDL_FRect scopeScale;
+        SDL_FRect scopeMaxPoints;
+        SDL_FRect scopeMode;
     } titles;
 
     /* ---------- */
@@ -46,6 +52,7 @@ typedef struct {
     struct {
         SDL_FRect wavFilePath;
         SDL_FRect scopeScale;
+        SDL_FRect scopeMaxPoints;
     } fields;
     //
 } UI_ELEMENTS;
@@ -275,6 +282,10 @@ static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
 
         case UI_BTN_NONE:
         case UI_BTN_VOLUME:
+        case UI_BTN_SCOPE_MAX_POINTS_NEG:
+        case UI_BTN_SCOPE_MAX_POINTS_POS:
+        case UI_BTN_SCOPE_MODE_POINTS:
+        case UI_BTN_SCOPE_MODE_LINES:
         case UI_FIELD_PATH:
         default:
             break;
@@ -295,8 +306,8 @@ void updateScope(appState *state) {
         .h = (float)state->height,
         .x = 0.f,
         .y = 0.f };
-    state->scopeHeight = (int)scopeFrame.h - 1; // - 1 for safety due to type conversion
-    state->scopeWidth = (int)scopeFrame.w - 1; // - 1 for safety due to type conversion
+    state->SCOPE.height = (int)scopeFrame.h - 1; // - 1 for safety due to type conversion
+    state->SCOPE.width = (int)scopeFrame.w - 1; // - 1 for safety due to type conversion
     SDL_RenderRect(state->renderer, &scopeFrame);
 }
 
@@ -321,8 +332,8 @@ void updateSettings(appState *state) {
     /* ----------------------- */
     SDL_FRect settingsFrame = {
         .h = (float)state->height,
-        .w = (float)(state->width - state->scopeWidth),
-        .x = (float)state->scopeWidth,
+        .w = (float)(state->width - state->SCOPE.width),
+        .x = (float)state->SCOPE.width,
         .y = 0.f };
     settingsFrameW = settingsFrame.w - 2; // "- 2" j for aesthetic purposes
     settingsFrameX = settingsFrame.x + 1; // cuz the "- 2" above
@@ -482,16 +493,16 @@ void updateSettings(appState *state) {
     // [ROW 5]
 
     // Scope Size Title
-    SDL_FRect *ttlscopeScale = &UI.titles.scopeScale;
-    *ttlscopeScale = (SDL_FRect){
+    SDL_FRect *ttlScopeScale = &UI.titles.scopeScale;
+    *ttlScopeScale = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
         .y = lastElementY };
-    setLastElementY(ttlscopeScale, &lastElementY);
+    setLastElementY(ttlScopeScale, &lastElementY);
     UI_TEXT titlescopeScale;
-    renderTitle(state, &titlescopeScale, "Scope Scale", *ttlscopeScale);
-    SDL_RenderRect(state->renderer, ttlscopeScale);
+    renderTitle(state, &titlescopeScale, "Scope Scale", *ttlScopeScale);
+    SDL_RenderRect(state->renderer, ttlScopeScale);
 
     // Scope Size Frame
     SDL_FRect scopeScaleFrame = {
@@ -510,7 +521,7 @@ void updateSettings(appState *state) {
         .y = lastElementY };
     UI_TEXT textScopeScaleVal;
     char scaleValue[4];
-    SDL_snprintf(scaleValue, 5, "%i%%", state->scopeScale);
+    SDL_snprintf(scaleValue, 5, "%i%%", state->SCOPE.scale);
     renderTitle(state, &textScopeScaleVal, scaleValue, *scopeScaleVal);
     SDL_RenderRect(state->renderer, scopeScaleVal);
 
@@ -534,6 +545,99 @@ void updateSettings(appState *state) {
     setLastElementY(scopeScalePos, &lastElementY);
     SDL_RenderRect(state->renderer, scopeScalePos);
     drawSymbol(state, UI_BTN_SCOPE_SCALE_POS, *scopeScalePos);
+
+    // [ROW 6]
+
+    // Scope Max Points Title
+    SDL_FRect *ttlScopeMaxPoints = &UI.titles.scopeMaxPoints;
+    *ttlScopeMaxPoints = (SDL_FRect){
+        .h = ROW_TITLE_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = lastElementY };
+    setLastElementY(ttlScopeMaxPoints, &lastElementY);
+    UI_TEXT titleScopeMaxPoints;
+    renderTitle(state, &titleScopeMaxPoints, "Max Points", *ttlScopeMaxPoints);
+    SDL_RenderRect(state->renderer, ttlScopeMaxPoints);
+
+    // Scope Max Points Frame
+    SDL_FRect scopeMaxPointsFrame = {
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = lastElementY };
+    SDL_RenderRect(state->renderer, &scopeMaxPointsFrame);
+
+    // Scope Max Points Value Display
+    SDL_FRect *scopeMaxPointsVal = &UI.fields.scopeMaxPoints;
+    *scopeMaxPointsVal = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.60f), // 2/4
+        .x = settingsFrameX + ((settingsFrameW / 2) - ((settingsFrameW * 0.60f) / 2)),
+        .y = lastElementY };
+    UI_TEXT textScopeMaxPointsVal;
+    char maxPointsValue[20];
+    SDL_snprintf(maxPointsValue, 21, "%u", state->SCOPE.maxPoints);
+    renderTitle(state, &textScopeMaxPointsVal, maxPointsValue, *scopeMaxPointsVal);
+    SDL_RenderRect(state->renderer, scopeMaxPointsVal);
+
+    // Scope Max Points Negative Button
+    SDL_FRect *scopeMaxPointsNeg = &UI.buttons.scopeMaxPointsNeg;
+    *scopeMaxPointsNeg = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.20f), // 1/4
+        .x = settingsFrameX,
+        .y = lastElementY };
+    SDL_RenderRect(state->renderer, scopeMaxPointsNeg);
+    drawSymbol(state, UI_BTN_SCOPE_SCALE_NEG, *scopeMaxPointsNeg);
+
+    // Scope Max Points Positive Button
+    SDL_FRect *scopeMaxPointsPos = &UI.buttons.scopeMaxPointsPos;
+    *scopeMaxPointsPos = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = (settingsFrameW * 0.20f), // 1/4
+        .x = scopeScaleVal->x + scopeScaleVal->w,
+        .y = lastElementY };
+    setLastElementY(scopeMaxPointsPos, &lastElementY);
+    SDL_RenderRect(state->renderer, scopeMaxPointsPos);
+    drawSymbol(state, UI_BTN_SCOPE_SCALE_POS, *scopeMaxPointsPos);
+
+    // [ROW 7]
+
+    // Scope Mode Title
+    SDL_FRect *ttlScopeMode = &UI.titles.scopeMode;
+    *ttlScopeMode = (SDL_FRect){
+        .h = ROW_TITLE_H,
+        .w = settingsFrameW / 1,
+        .x = settingsFrameX,
+        .y = lastElementY };
+    setLastElementY(ttlScopeMode, &lastElementY);
+    UI_TEXT titleScopeMode;
+    renderTitle(state, &titleScopeMode, "Draw Mode", *ttlScopeMode);
+    SDL_RenderRect(state->renderer, ttlScopeMode);
+
+    // Scope Mode Points
+    SDL_FRect *btnModePoints = &UI.buttons.scopeModePoints;
+    *btnModePoints = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 2,
+        .x = settingsFrameX,
+        .y = lastElementY };
+    UI_TEXT textModePoints;
+    renderTitle(state, &textModePoints, "Points", *btnModePoints);
+    SDL_RenderRect(state->renderer, btnModePoints);
+
+    // Scope Mode Lines
+    SDL_FRect *btnModeLines = &UI.buttons.scopeModeLines;
+    *btnModeLines = (SDL_FRect){
+        .h = ROW_ELEMENT_H,
+        .w = settingsFrameW / 2,
+        .x = settingsFrameX + btnModePoints->w,
+        .y = lastElementY };
+    setLastElementY(btnModeLines, &lastElementY);
+    UI_TEXT textModeLines;
+    renderTitle(state, &textModeLines, "Lines", *btnModeLines);
+    SDL_RenderRect(state->renderer, btnModeLines);
 }
 
 UI_BUTTONS getUIButtonEnum(float x, float y) {
@@ -557,6 +661,18 @@ UI_BUTTONS getUIButtonEnum(float x, float y) {
 
     if (isMouseInButton(x, y, UI.buttons.scopeScalePos))
         return UI_BTN_SCOPE_SCALE_POS;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsNeg))
+        return UI_BTN_SCOPE_MAX_POINTS_NEG;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsPos))
+        return UI_BTN_SCOPE_MAX_POINTS_POS;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeModePoints))
+        return UI_BTN_SCOPE_MODE_POINTS;
+
+    if (isMouseInButton(x, y, UI.buttons.scopeModeLines))
+        return UI_BTN_SCOPE_MODE_LINES;
 
     return UI_BTN_NONE;
 }
@@ -583,6 +699,18 @@ SDL_FRect getUIButtonRect(UI_BUTTONS button) {
 
         case UI_BTN_SCOPE_SCALE_POS:
             return UI.buttons.scopeScalePos;
+
+        case UI_BTN_SCOPE_MAX_POINTS_NEG:
+            return UI.buttons.scopeMaxPointsNeg;
+
+        case UI_BTN_SCOPE_MAX_POINTS_POS:
+            return UI.buttons.scopeMaxPointsPos;
+        
+        case UI_BTN_SCOPE_MODE_POINTS:
+            return UI.buttons.scopeModePoints;
+
+        case UI_BTN_SCOPE_MODE_LINES:
+            return UI.buttons.scopeModeLines;
 
         case UI_BTN_NONE:
             break;

@@ -7,8 +7,15 @@
 
 // http://soundfile.sapp.org/doc/WaveFormat/
 
-static uint16_t read16Bit(const uint8_t *buffer) { return (uint16_t)(buffer[0] | ((uint16_t)buffer[1] << 8)); }
-static uint32_t read32Bit(const uint8_t *buffer) { return (uint32_t)(buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24)); }
+static uint16_t read16Bit(const uint8_t *buffer) {
+    uint16_t value = (buffer[0] | ((uint16_t)buffer[1] << 8));
+    return value;
+}
+
+static uint32_t read32Bit(const uint8_t *buffer) {
+    uint32_t value = (buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24));
+    return value;
+}
 
 static _Bool parseHeader(const uint8_t *buffer, size_t fileBytes, HEADER *header) {
     size_t offset = 12;

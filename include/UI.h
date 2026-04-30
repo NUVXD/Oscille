@@ -12,6 +12,10 @@ typedef enum {
 	UI_BTN_VOLUME,
     UI_BTN_SCOPE_SCALE_NEG,
     UI_BTN_SCOPE_SCALE_POS,
+    UI_BTN_SCOPE_MAX_POINTS_NEG,
+    UI_BTN_SCOPE_MAX_POINTS_POS,
+    UI_BTN_SCOPE_MODE_POINTS,
+    UI_BTN_SCOPE_MODE_LINES
 } UI_BUTTONS;
 
 extern void updateScope(struct appState *state);

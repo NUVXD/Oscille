@@ -52,6 +52,7 @@ static int appInit(appState *state) {
         SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
+    SDL_SetWindowMinimumSize(state->window, WINDOW_INIT_W, WINDOW_INIT_H);
     // create & check text engine
     state->TEXT.textEngine = TTF_CreateRendererTextEngine(state->renderer);
     if (!state->TEXT.textEngine) {
@@ -77,8 +78,8 @@ static int appInit(appState *state) {
     // inits various appState variables
     SDL_GetWindowSize(state->window, &state->width, &state->height);
     state->AUDIO.volumeGain = 0.5f;
-    state->scopeScale = 90;
-
+    state->SCOPE.scale = 90;
+    state->SCOPE.maxPoints = 2048;
     return 0;
 }
 
