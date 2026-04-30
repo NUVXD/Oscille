@@ -624,7 +624,10 @@ void updateSettings(appState *state) {
         .x = settingsFrameX,
         .y = lastElementY };
     UI_TEXT textModePoints;
-    renderTitle(state, &textModePoints, "Points", *btnModePoints);
+    if (state->SCOPE.mode == 0)
+        renderTitle(state, &textModePoints, "> Points <", *btnModePoints);
+    else
+        renderTitle(state, &textModePoints, "Points", *btnModePoints);
     SDL_RenderRect(state->renderer, btnModePoints);
 
     // Scope Mode Lines
@@ -636,7 +639,10 @@ void updateSettings(appState *state) {
         .y = lastElementY };
     setLastElementY(btnModeLines, &lastElementY);
     UI_TEXT textModeLines;
-    renderTitle(state, &textModeLines, "Lines", *btnModeLines);
+    if (state->SCOPE.mode == 1)
+        renderTitle(state, &textModeLines, "> Lines <", *btnModeLines);
+    else
+        renderTitle(state, &textModeLines, "Lines", *btnModeLines);
     SDL_RenderRect(state->renderer, btnModeLines);
 }
 
@@ -705,7 +711,7 @@ SDL_FRect getUIButtonRect(UI_BUTTONS button) {
 
         case UI_BTN_SCOPE_MAX_POINTS_POS:
             return UI.buttons.scopeMaxPointsPos;
-        
+
         case UI_BTN_SCOPE_MODE_POINTS:
             return UI.buttons.scopeModePoints;
 

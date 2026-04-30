@@ -2,7 +2,7 @@
 #define SCOPE_H
 
 #include <stddef.h>
-#include "WAV.h"
+#include "SDL3/SDL.h"
 
 struct appState;
 
@@ -11,6 +11,6 @@ typedef struct {
     size_t pointCount;
 } Wave;
 
-extern int doWave(struct appState *state, HEADER header, uint8_t *wavBuffer);
+extern int doWave(struct appState *state);
 
 #endif

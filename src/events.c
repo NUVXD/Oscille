@@ -191,6 +191,7 @@ int appEvents(appState *state, SDL_Event *event) {
                         SDL_Log("unable to get text from clipboard: %s\n", SDL_GetError());
                     }
                     pastePathText(state, clipboardText);
+                    SDL_free((void *)clipboardText);
                 }
             }
             break;

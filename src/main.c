@@ -52,7 +52,6 @@ static int appInit(appState *state) {
         SDL_Log("couldn't create Renderer: %s\n", SDL_GetError());
         return 2;
     }
-    SDL_SetWindowMinimumSize(state->window, WINDOW_INIT_W, WINDOW_INIT_H);
     // create & check text engine
     state->TEXT.textEngine = TTF_CreateRendererTextEngine(state->renderer);
     if (!state->TEXT.textEngine) {
@@ -76,6 +75,7 @@ static int appInit(appState *state) {
         SDL_Log("couldn't enable VSync: %s\n", SDL_GetError());
 
     // inits various appState variables
+    SDL_SetWindowMinimumSize(state->window, WINDOW_INIT_W, WINDOW_INIT_H);
     SDL_GetWindowSize(state->window, &state->width, &state->height);
     state->AUDIO.volumeGain = 0.5f;
     state->SCOPE.scale = 90;
@@ -93,12 +93,12 @@ static int appClose(appState *state) {
             SDL_DestroyWindow(state->window);
         if (state->renderer)
             SDL_DestroyRenderer(state->renderer);
-        if (state->TEXT.textEngine)
-            TTF_DestroyRendererTextEngine(state->TEXT.textEngine);
         if (state->TEXT.font)
             TTF_CloseFont(state->TEXT.font);
         if (state->TEXT.text)
             TTF_DestroyText(state->TEXT.text);
+        if (state->TEXT.textEngine)
+            TTF_DestroyRendererTextEngine(state->TEXT.textEngine);
         free(state);
     }
     SDL_Quit();
@@ -120,6 +120,7 @@ int main(void) {
     {
         SDL_Log("app initialization failed\n");
         appClose(state);
+        return 0;
     }
 
     /*************************
@@ -146,7 +147,7 @@ int main(void) {
         updateScope(state); // updates scope surface
         updateSettings(state); // updates settings surface
         if (state->WAV.wavBuffer) {
-            isError = doWave(state, state->WAV.header, state->WAV.wavBuffer);
+            isError = doWave(state);
             if (isError) {
                 SDL_Log("critical error while drawing waveform or parsing WAV\n");
                 appClose(state);
