@@ -73,7 +73,7 @@ static int appInit(appState *state) {
     // inits various appState variables
     SDL_SetWindowMinimumSize(state->window, WINDOW_INIT_W, WINDOW_INIT_H);
     SDL_GetWindowSize(state->window, &state->width, &state->height);
-    state->AUDIO.volumeGain = 0.5f;
+    state->AUDIO.volumeGain = 0.25f;
     state->SCOPE.scale = 90;
     state->SCOPE.maxPoints = 2048;
     return 0;
@@ -97,8 +97,8 @@ static int appClose(appState *state) {
             TTF_DestroyRendererTextEngine(state->TEXT.textEngine);
         free(state);
     }
-    SDL_Quit();
     TTF_Quit();
+    SDL_Quit();
     return 0;
 }
 
@@ -140,6 +140,7 @@ int main(void) {
         SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
         SDL_RenderClear(state->renderer);
         // adds all the things to new frame
+        updateTopMenu(state);
         updateScope(state); // updates scope surface
         updateSettings(state); // updates settings surface
         if (state->WAV.wavBuffer) {

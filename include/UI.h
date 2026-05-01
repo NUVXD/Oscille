@@ -15,7 +15,8 @@ typedef enum UI_BUTTONS {
     UI_BTN_SCOPE_MAX_POINTS_NEG,
     UI_BTN_SCOPE_MAX_POINTS_POS,
     UI_BTN_SCOPE_MODE_POINTS,
-    UI_BTN_SCOPE_MODE_LINES
+    UI_BTN_SCOPE_MODE_LINES,
+    UI_BTN_MENU_FILE
 } UI_BUTTONS;
 
 typedef struct UI_ELEMENT {
@@ -33,6 +34,7 @@ typedef struct UI_TEXT {
 
 extern void updateScope(struct appState *state);
 extern void updateSettings(struct appState* state);
+extern void updateTopMenu(struct appState *state);
 extern UI_ELEMENT getUIElement(float x, float y);
 
 #endif

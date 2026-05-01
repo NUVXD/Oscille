@@ -21,6 +21,7 @@ static void printDebugHeaderInfo(appState *state) {
 };
 
 static _Bool isFieldPathActive = 0;
+static const SDL_DialogFileFilter FILTER_FORMAT = { .name = "WAV Files", .pattern = "wav;WAV" };
 
 static void appendPathText(appState *state, const char *text) {
     if (!state || !text || text[0] == '\0')
@@ -59,6 +60,18 @@ static void removePathChar(char *text) {
     while (len > 0 && (((unsigned char)text[len] & 0xC0) == 0x80))
         len--;
     text[len] = '\0';
+}
+
+// thread risk?
+static void SDLCALL openFileDialog(void *userdata, const char *const *filelist, int filter) {
+    (void)filter;
+    appState *state = (appState *)userdata;
+
+    if (filelist && filelist[0])
+    {
+        pastePathText(state, filelist[0]);
+        SDL_Log("%s\n", filelist[0]);
+    }
 }
 
 int appEvents(appState *state, SDL_Event *event) {
@@ -177,6 +190,10 @@ int appEvents(appState *state, SDL_Event *event) {
                         SDL_Log("scope mode (lines) button clicked\n");
                         state->SCOPE.mode = 1;
                         break;
+                    case UI_BTN_MENU_FILE:
+                        SDL_Log("file menu button clicked\n");
+                        SDL_ShowOpenFileDialog(openFileDialog, state, state->window, &FILTER_FORMAT, 1, (void *)0, 0);
+                        break;
                     case UI_BTN_NONE:
                     default:
                         isFieldPathActive = 0;
@@ -220,6 +237,7 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_SCOPE_MAX_POINTS_POS:
                     case UI_BTN_SCOPE_MODE_POINTS:
                     case UI_BTN_SCOPE_MODE_LINES:
+                    case UI_BTN_MENU_FILE:
                     default:
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);

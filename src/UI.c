@@ -41,6 +41,7 @@ static struct {
             UI_ELEMENT scopeMaxPointsPos;
             UI_ELEMENT scopeModePoints;
             UI_ELEMENT scopeModeLines;
+            UI_ELEMENT menuFile;
         } Button;
         // FIELDS
         struct {
@@ -61,7 +62,8 @@ static UI_ELEMENT *const UI_INTERACTIVES[] = {
     &UI.INTERACTIVE.Button.scopeMaxPointsPos,
     &UI.INTERACTIVE.Button.scopeModePoints,
     &UI.INTERACTIVE.Button.scopeModeLines,
-    &UI.INTERACTIVE.Field.wavFilePath
+    &UI.INTERACTIVE.Field.wavFilePath,
+    &UI.INTERACTIVE.Button.menuFile
 };
 
 static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect rect) {
@@ -127,7 +129,6 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
         case UI_BTN_PLAY: {
             int pointCount = 4;
             SDL_FPoint points[4];
-
             if (btnHalfWidth >= 10.f) {
                 points[0].x = btnCenterX - 7.5f;
                 points[1].x = btnCenterX - 7.5f;
@@ -145,7 +146,6 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
             points[1].y = btnCenterY - 7.5f;
             points[2].y = btnCenterY + 0.f;
             points[3].y = btnCenterY + 7.5f;
-
             SDL_RenderLines(state->renderer, points, pointCount);
             break;
         }
@@ -153,7 +153,6 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
         case UI_BTN_PAUSE: {
             SDL_FRect leftBar;
             SDL_FRect rightBar;
-
             if (btnHalfWidth >= 10.f) {
                 leftBar.w = 5.f;
                 leftBar.x = btnCenterX - 3.f - leftBar.w;
@@ -170,7 +169,6 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
             leftBar.y = btnCenterY - 7.5f;
             rightBar.h = 16.f;
             rightBar.y = btnCenterY - 7.5f;
-
             SDL_RenderRect(state->renderer, &leftBar);
             SDL_RenderRect(state->renderer, &rightBar);
             break;
@@ -180,7 +178,6 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
             int pointCount = 4;
             SDL_FPoint points[4];
             SDL_FRect leftBar;
-
             float leftBarW;
             float triangleW;
             float gap;
@@ -188,15 +185,12 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
             float innerMargin = 1.f;
             float symbolLeft = element.rect.x + innerMargin;
             float symbolRight = element.rect.x + element.rect.w - innerMargin;
-
             float symbolW = symbolRight - symbolLeft;
             if (symbolW <= 2.f)
                 break;
-
             leftBarW = 5.f;
             triangleW = 15.f;
             gap = 2.5f;
-
             float totalW = leftBarW + gap + triangleW;
             if (totalW > symbolW) {
                 float scale = symbolW / totalW;
@@ -205,21 +199,18 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
                 triangleW *= scale;
                 totalW = symbolW;
             }
-
             leftBar.w = leftBarW;
             leftBar.x = symbolLeft + ((symbolW - totalW) / 2.f);
             points[0].x = leftBar.x + leftBar.w + gap;
             points[1].x = leftBar.x + leftBar.w + gap;
             points[2].x = leftBar.x + leftBar.w + gap + triangleW;
             points[3].x = leftBar.x + leftBar.w + gap;
-
             leftBar.h = (halfHeight * 2.f) + 1.f;
             leftBar.y = btnCenterY - halfHeight;
             points[0].y = btnCenterY + halfHeight;
             points[1].y = btnCenterY - halfHeight;
             points[2].y = btnCenterY + 0.f;
             points[3].y = btnCenterY + halfHeight;
-
             SDL_RenderRect(state->renderer, &leftBar);
             SDL_RenderLines(state->renderer, points, pointCount);
             break;
@@ -281,9 +272,54 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
         case UI_BTN_SCOPE_MODE_POINTS:
         case UI_BTN_SCOPE_MODE_LINES:
         case UI_FIELD_PATH:
+        case UI_BTN_MENU_FILE:
         default:
             break;
     }
+}
+
+void updateTopMenu(appState *state) {
+    /* ------------------------------ */
+    /*   Initial Rendering Settings   */
+    /* ------------------------------ */
+    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
+    TTF_SetTextColor(state->TEXT.text, COLOR_BLACK);
+
+    /* --------------------- */
+    /*   Default Variables   */
+    /* --------------------- */
+    float colStartX = 1.f;
+    float menuFrameH = 25.f;
+    float ELEMENT_FRAME_W = 50.f;
+    float ELEMENT_FRAME_H = 20.f;
+    float ELEMENT_FRAME_Y = (menuFrameH - ELEMENT_FRAME_H) / 2.f;
+
+    /* ------------------- */
+    /*   Main Menu Frame   */
+    /* ------------------- */
+    SDL_FRect menuFrame = {
+        .h = menuFrameH,
+        .w = (float)state->width,
+        .x = 0.f,
+        .y = 0.f };
+    SDL_RenderFillRect(state->renderer, &menuFrame);
+
+    /* ------------------------- */
+    /*   Menu Columns Elements   */
+    /* ------------------------- */
+    SDL_SetRenderDrawColor(state->renderer, COLOR_BLACK);
+
+    /*   Open File Button   */
+    UI_ELEMENT *btnMenuFile = &UI.INTERACTIVE.Button.menuFile;
+    btnMenuFile->ID = UI_BTN_MENU_FILE;
+    btnMenuFile->rect = (SDL_FRect) {
+        .h = ELEMENT_FRAME_H,
+        .w = ELEMENT_FRAME_W,
+        .x = colStartX,
+        .y = ELEMENT_FRAME_Y };
+    UI_TEXT txtMenuFile;
+    renderTitle(state, &txtMenuFile, "File", btnMenuFile->rect);
+    SDL_RenderRect(state->renderer, &btnMenuFile->rect);
 }
 
 void updateScope(appState *state) {
@@ -295,11 +331,12 @@ void updateScope(appState *state) {
     /* -------------------- */
     /*   Main Scope Frame   */
     /* -------------------- */
+    // the 25s are because of menuFrameH, hardcoded j for now
     SDL_FRect scopeFrame = {
         .w = (float)(state->width * 3 / 4),
-        .h = (float)state->height,
+        .h = (float)(state->height - 25.f),
         .x = 0.f,
-        .y = 0.f };
+        .y = 25.f };
     state->SCOPE.height = (int)scopeFrame.h - 1; // - 1 for safety due to type conversion
     state->SCOPE.width = (int)scopeFrame.w - 1; // - 1 for safety due to type conversion
     SDL_RenderRect(state->renderer, &scopeFrame);
@@ -324,11 +361,12 @@ void updateSettings(appState *state) {
     /* ----------------------- */
     /*   Main Settings Frame   */
     /* ----------------------- */
+    // the 25s are because of menuFrameH, hardcoded j for now
     SDL_FRect settingsFrame = {
-        .h = (float)state->height,
+        .h = (float)(state->height - 25.f),
         .w = (float)(state->width - state->SCOPE.width),
         .x = (float)state->SCOPE.width,
-        .y = 0.f };
+        .y = 25.f };
     settingsFrameW = settingsFrame.w - 2; // "- 2" j for aesthetic purposes
     settingsFrameX = settingsFrame.x + 1; // cuz the "- 2" above
     SDL_RenderRect(state->renderer, &settingsFrame);
@@ -340,6 +378,7 @@ void updateSettings(appState *state) {
     /* --------- */
     /*   ROW 0   */
     /* --------- */
+    rowStartY = settingsFrame.y;
 
     // WAV Settings Section Title
     SDL_FRect *ttlWavSettings = &UI.STATIC.Title.wavSettings;
