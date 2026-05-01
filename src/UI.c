@@ -13,58 +13,65 @@
 #define COLOR_WHITE 255,255,255,255
 #define COLOR_BLACK 0,0,0,255
 
-typedef struct {
-    /* ----------- */
-    /*   BUTTONS   */
-    /* ----------- */
+/* --------------- */
+/*   UI ELEMENTS   */
+/* --------------- */
+static struct {
+    /*   STATIC ELEMENTS   */
     struct {
-        SDL_FRect wavPlay;
-        SDL_FRect wavPause;
-        SDL_FRect wavResume;
-        SDL_FRect wavVolume;
-
-        SDL_FRect scopeScaleNeg;
-        SDL_FRect scopeScalePos;
-        SDL_FRect scopeMaxPointsNeg;
-        SDL_FRect scopeMaxPointsPos;
-        SDL_FRect scopeModePoints;
-        SDL_FRect scopeModeLines;
-    } buttons;
-
-    /* ---------- */
-    /*   TITLES   */
-    /* ---------- */
+        // TITLES
+        struct {
+            SDL_FRect wavSettings;
+            SDL_FRect wavFilePath;
+            SDL_FRect wavControls;
+            SDL_FRect wavVolume;
+            SDL_FRect scopeSettings;
+            SDL_FRect scopeScale;
+            SDL_FRect scopeMaxPoints;
+            SDL_FRect scopeMode;
+        } Title;
+        // DISPLAYS
+        struct {
+            UI_ELEMENT scopeScale;
+            UI_ELEMENT scopeMaxPoints;
+        } Display;
+    } STATIC;
+    /*   INTERACTIVE ELEMENTS   */
     struct {
-        SDL_FRect wavSettings;
-        SDL_FRect wavFilePath;
-        SDL_FRect wavControls;
-        SDL_FRect wavVolume;
-
-        SDL_FRect scopeSettings;
-        SDL_FRect scopeScale;
-        SDL_FRect scopeMaxPoints;
-        SDL_FRect scopeMode;
-    } titles;
-
-    /* ---------- */
-    /*   FIELDS   */
-    /* ---------- */
-    struct {
-        SDL_FRect wavFilePath;
-        SDL_FRect scopeScale;
-        SDL_FRect scopeMaxPoints;
-    } fields;
+        // BUTTONS
+        struct {
+            UI_ELEMENT wavPlay;
+            UI_ELEMENT wavPause;
+            UI_ELEMENT wavResume;
+            UI_ELEMENT wavVolume;
+            UI_ELEMENT scopeScaleNeg;
+            UI_ELEMENT scopeScalePos;
+            UI_ELEMENT scopeMaxPointsNeg;
+            UI_ELEMENT scopeMaxPointsPos;
+            UI_ELEMENT scopeModePoints;
+            UI_ELEMENT scopeModeLines;
+        } Button;
+        // FIELDS
+        struct {
+            UI_ELEMENT wavFilePath;
+        } Field;
+    } INTERACTIVE;
     //
-} UI_ELEMENTS;
-static UI_ELEMENTS UI;
+} UI;
 
-typedef struct {
-    char *text;
-    int w;
-    int h;
-    float x;
-    float y;
-} UI_TEXT;
+static UI_ELEMENT *const UI_INTERACTIVES[] = {
+    &UI.INTERACTIVE.Button.wavPlay,
+    &UI.INTERACTIVE.Button.wavPause,
+    &UI.INTERACTIVE.Button.wavResume,
+    &UI.INTERACTIVE.Button.wavVolume,
+    &UI.INTERACTIVE.Button.scopeScaleNeg,
+    &UI.INTERACTIVE.Button.scopeScalePos,
+    &UI.INTERACTIVE.Button.scopeMaxPointsNeg,
+    &UI.INTERACTIVE.Button.scopeMaxPointsPos,
+    &UI.INTERACTIVE.Button.scopeModePoints,
+    &UI.INTERACTIVE.Button.scopeModeLines,
+    &UI.INTERACTIVE.Field.wavFilePath
+};
 
 static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL_FRect rect) {
     UI_Text->text = textString;
@@ -82,20 +89,17 @@ static void renderTitle(appState *state, UI_TEXT *UI_Text, char *textString, SDL
 
 static void renderPathFieldText(appState *state, SDL_FRect *rect) {
     const char *source = state->WAV.filePath;
-
     char visibleText[APP_WAV_PATH_MAX + 4];
     int textW = 0;
     int textH = 0;
     float textX;
     float textY;
-
     TTF_SetTextString(state->TEXT.text, source, 0);
     TTF_GetTextSize(state->TEXT.text, &textW, &textH);
 
     if ((float)textW > (rect->w - 10.f)) {
         size_t srcLen = strlen(source);
         size_t start = 0;
-
         visibleText[0] = '\0';
         for (start = 0; start < srcLen; start++) {
             SDL_snprintf(visibleText, sizeof(visibleText), "...%s", source + start);
@@ -106,30 +110,29 @@ static void renderPathFieldText(appState *state, SDL_FRect *rect) {
             }
         }
     }
-
     textX = rect->x + 5.f;
     textY = rect->y + ((rect->h - (float)textH) / 2.f);
     TTF_DrawRendererText(state->TEXT.text, textX, textY);
 }
 
 static _Bool isMouseInButton(float x, float y, SDL_FRect button) {
-    _Bool isX = (x >= button.x) && (x <= (button.x + button.w));
-    _Bool isY = (y >= button.y) && (y <= (button.y + button.h));
-    _Bool isTrue = isX && isY;
-    return isTrue;
+    _Bool isInButtonX = (x >= button.x) && (x <= (button.x + button.w));
+    _Bool isInButtonY = (y >= button.y) && (y <= (button.y + button.h));
+    _Bool isInButton = (isInButtonX && isInButtonY);
+    return isInButton;
 }
 
-static void setLastElementY(SDL_FRect *rect, float *lastElementY) {
-    *lastElementY = rect->y + rect->h;
+static void setRowFrom(SDL_FRect rect, float *rowStartY) {
+    *rowStartY = (rect.y + rect.h);
 }
 
-static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
-    float btnHalfWidth = btnRect.w / 2;
-    float btnHalfHeight = btnRect.h / 2;
-    float btnCenterX = btnRect.x + btnHalfWidth;
-    float btnCenterY = btnRect.y + btnHalfHeight;
+static void drawSymbol(appState *state, UI_ELEMENT element) {
+    float btnHalfWidth = element.rect.w / 2;
+    float btnHalfHeight = element.rect.h / 2;
+    float btnCenterX = element.rect.x + btnHalfWidth;
+    float btnCenterY = element.rect.y + btnHalfHeight;
 
-    switch (btnType) {
+    switch (element.ID) {
         case UI_BTN_PLAY: {
             int pointCount = 4;
             SDL_FPoint points[4];
@@ -192,8 +195,8 @@ static void drawSymbol(appState *state, UI_BUTTONS btnType, SDL_FRect btnRect) {
             float gap;
             float halfHeight = 7.5f;
             float innerMargin = 1.f;
-            float symbolLeft = btnRect.x + innerMargin;
-            float symbolRight = btnRect.x + btnRect.w - innerMargin;
+            float symbolLeft = element.rect.x + innerMargin;
+            float symbolRight = element.rect.x + element.rect.w - innerMargin;
 
             float symbolW = symbolRight - symbolLeft;
             if (symbolW <= 2.f)
@@ -322,8 +325,8 @@ void updateSettings(appState *state) {
     /*   Default Variables   */
     /* --------------------- */
     float ROW_TITLE_H = 20.f; // default title height in row
-    float ROW_ELEMENT_H = 35.f; // default element height in row
-    float lastElementY = 0.f;
+    float ROW_ELEMENT_H = 30.f; // default element height in row
+    float rowStartY = 0.f;
     float settingsFrameW;
     float settingsFrameX;
 
@@ -343,104 +346,116 @@ void updateSettings(appState *state) {
     /*   Settings Rows Elements   */
     /* -------------------------- */
 
-    // [ROW 0]
+    /* --------- */
+    /*   ROW 0   */
+    /* --------- */
 
-    // WAV Section Title
-    SDL_FRect *ttlWavSettings = &UI.titles.wavSettings;
+    // WAV Settings Section Title
+    SDL_FRect *ttlWavSettings = &UI.STATIC.Title.wavSettings;
     *ttlWavSettings = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlWavSettings, &lastElementY);
-    UI_TEXT titleWAVSettings;
+        .y = rowStartY };
+    setRowFrom(*ttlWavSettings, &rowStartY);
+    UI_TEXT txtWAVSettings;
     SDL_RenderFillRect(state->renderer, ttlWavSettings);
     TTF_SetTextColor(state->TEXT.text, COLOR_BLACK);
-    renderTitle(state, &titleWAVSettings, "WAV Settings", *ttlWavSettings);
+    renderTitle(state, &txtWAVSettings, "WAV Settings", *ttlWavSettings);
     TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
 
-    // [ROW 1]
+    /* --------- */
+    /*   ROW 1   */
+    /* --------- */
 
     // WAV File Path Title
-    SDL_FRect *ttlFilePath = &UI.titles.wavFilePath;
+    SDL_FRect *ttlFilePath = &UI.STATIC.Title.wavFilePath;
     *ttlFilePath = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlFilePath, &lastElementY);
-    UI_TEXT titleWAVPath;
-    renderTitle(state, &titleWAVPath, "WAV File Path", *ttlFilePath);
+        .y = rowStartY };
+    setRowFrom(*ttlFilePath, &rowStartY);
+    UI_TEXT txtWAVPath;
+    renderTitle(state, &txtWAVPath, "WAV File Path", *ttlFilePath);
     SDL_RenderRect(state->renderer, ttlFilePath);
 
     // WAV File Path Field
-    SDL_FRect *fldFilePath = &UI.fields.wavFilePath;
-    *fldFilePath = (SDL_FRect){
+    UI_ELEMENT *fldWavFilePath = &UI.INTERACTIVE.Field.wavFilePath;
+    fldWavFilePath->ID = UI_FIELD_PATH;
+    fldWavFilePath->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(fldFilePath, &lastElementY);
-    SDL_RenderRect(state->renderer, fldFilePath);
-    renderPathFieldText(state, fldFilePath);
+        .y = rowStartY };
+    setRowFrom(fldWavFilePath->rect, &rowStartY);
+    SDL_RenderRect(state->renderer, &fldWavFilePath->rect);
+    renderPathFieldText(state, &fldWavFilePath->rect);
 
-    // [ROW 2]
+    /* --------- */
+    /*   ROW 2   */
+    /* --------- */
 
     // Controls Title
-    SDL_FRect *ttlControls = &UI.titles.wavControls;
-    *ttlControls = (SDL_FRect){
+    SDL_FRect *ttlWavControls = &UI.STATIC.Title.wavControls;
+    *ttlWavControls = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlControls, &lastElementY);
-    UI_TEXT titleWAVControls;
-    renderTitle(state, &titleWAVControls, "WAV Audio Controls", *ttlControls);
-    SDL_RenderRect(state->renderer, ttlControls);
+        .y = rowStartY };
+    setRowFrom(*ttlWavControls, &rowStartY);
+    UI_TEXT txtWAVControls;
+    renderTitle(state, &txtWAVControls, "WAV Audio Controls", *ttlWavControls);
+    SDL_RenderRect(state->renderer, ttlWavControls);
 
     // Play Button
-    SDL_FRect *btnPlay = &UI.buttons.wavPlay;
-    *btnPlay = (SDL_FRect){
+    UI_ELEMENT *btnWavPlay = &UI.INTERACTIVE.Button.wavPlay;
+    btnWavPlay->ID = UI_BTN_PLAY;
+    btnWavPlay->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 3,
         .x = settingsFrameX,
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, btnPlay);
-    drawSymbol(state, UI_BTN_PLAY, *btnPlay);
+        .y = rowStartY };
+    SDL_RenderRect(state->renderer, &btnWavPlay->rect);
+    drawSymbol(state, *btnWavPlay);
 
     // Pause Button
-    SDL_FRect *btnPause = &UI.buttons.wavPause;
-    *btnPause = (SDL_FRect){
+    UI_ELEMENT *btnWavPause = &UI.INTERACTIVE.Button.wavPause;
+    btnWavPause->ID = UI_BTN_PAUSE;
+    btnWavPause->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 3,
-        .x = btnPlay->x + btnPlay->w, // to the right of Play Btn
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, btnPause);
-    drawSymbol(state, UI_BTN_PAUSE, *btnPause);
+        .x = btnWavPlay->rect.x + btnWavPlay->rect.w, // to the right of Play Btn
+        .y = rowStartY };
+    SDL_RenderRect(state->renderer, &btnWavPause->rect);
+    drawSymbol(state, *btnWavPause);
 
     // Resume Button
-    SDL_FRect *btnResume = &UI.buttons.wavResume;
-    *btnResume = (SDL_FRect){
+    UI_ELEMENT *btnWavResume = &UI.INTERACTIVE.Button.wavResume;
+    btnWavResume->ID = UI_BTN_RESUME;
+    btnWavResume->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 3, // to the right of Pause Btn
-        .x = btnPause->x + btnPause->w,
-        .y = lastElementY };
-    setLastElementY(btnResume, &lastElementY);
-    SDL_RenderRect(state->renderer, btnResume);
-    drawSymbol(state, UI_BTN_RESUME, *btnResume);
+        .x = btnWavPause->rect.x + btnWavPause->rect.w,
+        .y = rowStartY };
+    setRowFrom(btnWavResume->rect, &rowStartY);
+    SDL_RenderRect(state->renderer, &btnWavResume->rect);
+    drawSymbol(state, *btnWavResume);
 
-    // [ROW 3]
+    /* --------- */
+    /*   ROW 3   */
+    /* --------- */
 
     // Volume Title
-    SDL_FRect *ttlVolume = &UI.titles.wavVolume;
+    SDL_FRect *ttlVolume = &UI.STATIC.Title.wavVolume;
     *ttlVolume = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlVolume, &lastElementY);
-    UI_TEXT titleAudioVolume;
-    renderTitle(state, &titleAudioVolume, "WAV Audio Volume", *ttlVolume);
+        .y = rowStartY };
+    setRowFrom(*ttlVolume, &rowStartY);
+    UI_TEXT txtAudioVolume;
+    renderTitle(state, &txtAudioVolume, "WAV Audio Volume", *ttlVolume);
     SDL_RenderRect(state->renderer, ttlVolume);
 
     // Volume Button Frame
@@ -448,240 +463,211 @@ void updateSettings(appState *state) {
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(&volFrameBig, &lastElementY);
+        .y = rowStartY };
+    setRowFrom(volFrameBig, &rowStartY);
     SDL_RenderRect(state->renderer, &volFrameBig);
 
     // Volume Button Slider
-    SDL_FRect *btnVolume = &UI.buttons.wavVolume;
-    *btnVolume = (SDL_FRect){
+    UI_ELEMENT *btnWavVolume = &UI.INTERACTIVE.Button.wavVolume;
+    btnWavVolume->ID = UI_BTN_VOLUME;
+    btnWavVolume->rect = (SDL_FRect){
         .h = volFrameBig.h / 2,
         .w = volFrameBig.w - 20.f,
         .x = volFrameBig.x + 10.f,
         .y = volFrameBig.y + (volFrameBig.h / 4) };
-    if (btnVolume->w == 0) btnVolume->w = 0.00001f;
-    SDL_RenderRect(state->renderer, btnVolume);
-    // ts is only UI representation of gain
-    float UIgain = state->AUDIO.volumeGain;
-    // clamps if for some reason < 0 || > 1
-    if (UIgain < 0.f) UIgain = 0.f;
-    if (UIgain > 1.f) UIgain = 1.f;
+    if (btnWavVolume->rect.w == 0) btnWavVolume->rect.w = 0.00001f;
+    SDL_RenderRect(state->renderer, &btnWavVolume->rect);
+    //
+    float UIgain = state->AUDIO.volumeGain; // this is only UI representation of gain
+    if (UIgain < 0.f) UIgain = 0.f; // clamps if for some reason < 0.f
+    if (UIgain > 1.f) UIgain = 1.f; // clamps if for some reason > 1.f
+    //
     SDL_FRect volBar = {
-        .h = btnVolume->h,
-        .w = btnVolume->w * UIgain,
-        .x = btnVolume->x,
-        .y = btnVolume->y };
+        .h = btnWavVolume->rect.h,
+        .w = btnWavVolume->rect.w * UIgain,
+        .x = btnWavVolume->rect.x,
+        .y = btnWavVolume->rect.y };
     if (volBar.w == 0) volBar.w = 0.00001f;
     SDL_RenderFillRect(state->renderer, &volBar);
 
-    // [ROW 4]
+    /* --------- */
+    /*   ROW 4   */
+    /* --------- */
 
-    // Scope Section Title
-    SDL_FRect *ttlScopeSettings = &UI.titles.scopeSettings;
+    // Scope Settings Section Title
+    SDL_FRect *ttlScopeSettings = &UI.STATIC.Title.scopeSettings;
     *ttlScopeSettings = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlScopeSettings, &lastElementY);
-    UI_TEXT titleScopeSettings;
+        .y = rowStartY };
+    setRowFrom(*ttlScopeSettings, &rowStartY);
+    UI_TEXT txtScopeSettings;
     SDL_RenderFillRect(state->renderer, ttlScopeSettings);
     TTF_SetTextColor(state->TEXT.text, COLOR_BLACK);
-    renderTitle(state, &titleScopeSettings, "Scope Settings", *ttlScopeSettings);
+    renderTitle(state, &txtScopeSettings, "Scope Settings", *ttlScopeSettings);
     TTF_SetTextColor(state->TEXT.text, COLOR_GREEN);
 
-    // [ROW 5]
+    /* --------- */
+    /*   ROW 5   */
+    /* --------- */
 
-    // Scope Size Title
-    SDL_FRect *ttlScopeScale = &UI.titles.scopeScale;
+    // Scope Scale Title
+    SDL_FRect *ttlScopeScale = &UI.STATIC.Title.scopeScale;
     *ttlScopeScale = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlScopeScale, &lastElementY);
-    UI_TEXT titlescopeScale;
-    renderTitle(state, &titlescopeScale, "Scope Scale", *ttlScopeScale);
+        .y = rowStartY };
+    setRowFrom(*ttlScopeScale, &rowStartY);
+    UI_TEXT txtScopeScale;
+    renderTitle(state, &txtScopeScale, "Scope Scale", *ttlScopeScale);
     SDL_RenderRect(state->renderer, ttlScopeScale);
 
-    // Scope Size Value Display
-    SDL_FRect *scopeScaleVal = &UI.fields.scopeScale;
-    *scopeScaleVal = (SDL_FRect){
+    // Scope Scale Value Display
+    UI_ELEMENT *dspScopeScale = &UI.STATIC.Display.scopeScale;
+    dspScopeScale->ID = UI_BTN_NONE;
+    dspScopeScale->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.60f), // 2/4
         .x = settingsFrameX + ((settingsFrameW / 2) - ((settingsFrameW * 0.60f) / 2)),
-        .y = lastElementY };
-    UI_TEXT textScopeScaleVal;
+        .y = rowStartY };
+    UI_TEXT txtScaleVal;
     char scaleValue[4];
     SDL_snprintf(scaleValue, 5, "%i%%", state->SCOPE.scale);
-    renderTitle(state, &textScopeScaleVal, scaleValue, *scopeScaleVal);
-    SDL_RenderRect(state->renderer, scopeScaleVal);
+    renderTitle(state, &txtScaleVal, scaleValue, dspScopeScale->rect);
+    SDL_RenderRect(state->renderer, &dspScopeScale->rect);
 
-    // Scope Size Negative Button
-    SDL_FRect *scopeScaleNeg = &UI.buttons.scopeScaleNeg;
-    *scopeScaleNeg = (SDL_FRect){
+    // Scope Scale Negative Button
+    UI_ELEMENT *btnScopeScaleNeg = &UI.INTERACTIVE.Button.scopeScaleNeg;
+    btnScopeScaleNeg->ID = UI_BTN_SCOPE_SCALE_NEG;
+    btnScopeScaleNeg->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.20f), // 1/4
         .x = settingsFrameX,
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, scopeScaleNeg);
-    drawSymbol(state, UI_BTN_SCOPE_SCALE_NEG, *scopeScaleNeg);
+        .y = rowStartY };
+    SDL_RenderRect(state->renderer, &btnScopeScaleNeg->rect);
+    drawSymbol(state, *btnScopeScaleNeg);
 
-    // Scope Size Positive Button
-    SDL_FRect *scopeScalePos = &UI.buttons.scopeScalePos;
-    *scopeScalePos = (SDL_FRect){
+    // Scope Scale Positive Button
+    UI_ELEMENT *btnScopeScalePos = &UI.INTERACTIVE.Button.scopeScalePos;
+    btnScopeScalePos->ID = UI_BTN_SCOPE_SCALE_POS;
+    btnScopeScalePos->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.20f), // 1/4
-        .x = scopeScaleVal->x + scopeScaleVal->w,
-        .y = lastElementY };
-    setLastElementY(scopeScalePos, &lastElementY);
-    SDL_RenderRect(state->renderer, scopeScalePos);
-    drawSymbol(state, UI_BTN_SCOPE_SCALE_POS, *scopeScalePos);
+        .x = dspScopeScale->rect.x + dspScopeScale->rect.w,
+        .y = rowStartY };
+    setRowFrom(btnScopeScalePos->rect, &rowStartY);
+    SDL_RenderRect(state->renderer, &btnScopeScalePos->rect);
+    drawSymbol(state, *btnScopeScalePos);
 
-    // [ROW 6]
+    /* --------- */
+    /*   ROW 6   */
+    /* --------- */
 
     // Scope Max Points Title
-    SDL_FRect *ttlScopeMaxPoints = &UI.titles.scopeMaxPoints;
+    SDL_FRect *ttlScopeMaxPoints = &UI.STATIC.Title.scopeMaxPoints;
     *ttlScopeMaxPoints = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlScopeMaxPoints, &lastElementY);
+        .y = rowStartY };
+    setRowFrom(*ttlScopeMaxPoints, &rowStartY);
     UI_TEXT titleScopeMaxPoints;
     renderTitle(state, &titleScopeMaxPoints, "Max Points", *ttlScopeMaxPoints);
     SDL_RenderRect(state->renderer, ttlScopeMaxPoints);
 
     // Scope Max Points Value Display
-    SDL_FRect *scopeMaxPointsVal = &UI.fields.scopeMaxPoints;
-    *scopeMaxPointsVal = (SDL_FRect){
+    UI_ELEMENT *dspScopeMaxPoints = &UI.STATIC.Display.scopeMaxPoints;
+    dspScopeMaxPoints->ID = UI_BTN_NONE;
+    dspScopeMaxPoints->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.60f), // 2/4
         .x = settingsFrameX + ((settingsFrameW / 2) - ((settingsFrameW * 0.60f) / 2)),
-        .y = lastElementY };
+        .y = rowStartY };
     UI_TEXT textScopeMaxPointsVal;
     char maxPointsValue[20];
     SDL_snprintf(maxPointsValue, 21, "%u", state->SCOPE.maxPoints);
-    renderTitle(state, &textScopeMaxPointsVal, maxPointsValue, *scopeMaxPointsVal);
-    SDL_RenderRect(state->renderer, scopeMaxPointsVal);
+    renderTitle(state, &textScopeMaxPointsVal, maxPointsValue, dspScopeMaxPoints->rect);
+    SDL_RenderRect(state->renderer, &dspScopeMaxPoints->rect);
 
     // Scope Max Points Negative Button
-    SDL_FRect *scopeMaxPointsNeg = &UI.buttons.scopeMaxPointsNeg;
-    *scopeMaxPointsNeg = (SDL_FRect){
+    UI_ELEMENT *btnScopeMaxPointsNeg = &UI.INTERACTIVE.Button.scopeMaxPointsNeg;
+    btnScopeMaxPointsNeg->ID = UI_BTN_SCOPE_MAX_POINTS_NEG;
+    btnScopeMaxPointsNeg->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.20f), // 1/4
         .x = settingsFrameX,
-        .y = lastElementY };
-    SDL_RenderRect(state->renderer, scopeMaxPointsNeg);
-    drawSymbol(state, UI_BTN_SCOPE_SCALE_NEG, *scopeMaxPointsNeg);
+        .y = rowStartY };
+    SDL_RenderRect(state->renderer, &btnScopeMaxPointsNeg->rect);
+    drawSymbol(state, (UI_ELEMENT) { .ID = btnScopeScaleNeg->ID, .rect = btnScopeMaxPointsNeg->rect }); // easier to clone here than in drawSymbol
 
     // Scope Max Points Positive Button
-    SDL_FRect *scopeMaxPointsPos = &UI.buttons.scopeMaxPointsPos;
-    *scopeMaxPointsPos = (SDL_FRect){
+    UI_ELEMENT *btnScopeMaxPointsPos = &UI.INTERACTIVE.Button.scopeMaxPointsPos;
+    btnScopeMaxPointsPos->ID = UI_BTN_SCOPE_MAX_POINTS_POS;
+    btnScopeMaxPointsPos->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = (settingsFrameW * 0.20f), // 1/4
-        .x = scopeScaleVal->x + scopeScaleVal->w,
-        .y = lastElementY };
-    setLastElementY(scopeMaxPointsPos, &lastElementY);
-    SDL_RenderRect(state->renderer, scopeMaxPointsPos);
-    drawSymbol(state, UI_BTN_SCOPE_SCALE_POS, *scopeMaxPointsPos);
+        .x = dspScopeMaxPoints->rect.x + dspScopeMaxPoints->rect.w,
+        .y = rowStartY };
+    setRowFrom(btnScopeMaxPointsPos->rect, &rowStartY);
+    SDL_RenderRect(state->renderer, &btnScopeMaxPointsPos->rect);
+    drawSymbol(state, (UI_ELEMENT) { .ID = btnScopeScalePos->ID, .rect = btnScopeMaxPointsPos->rect }); // easier to clone here than in drawSymbol
 
-    // [ROW 7]
+    /* --------- */
+    /*   ROW 7   */
+    /* --------- */
 
     // Scope Mode Title
-    SDL_FRect *ttlScopeMode = &UI.titles.scopeMode;
+    SDL_FRect *ttlScopeMode = &UI.STATIC.Title.scopeMode;
     *ttlScopeMode = (SDL_FRect){
         .h = ROW_TITLE_H,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
-        .y = lastElementY };
-    setLastElementY(ttlScopeMode, &lastElementY);
+        .y = rowStartY };
+    setRowFrom(*ttlScopeMode, &rowStartY);
     UI_TEXT titleScopeMode;
     renderTitle(state, &titleScopeMode, "Draw Mode", *ttlScopeMode);
     SDL_RenderRect(state->renderer, ttlScopeMode);
 
     // Scope Mode Points
-    SDL_FRect *btnModePoints = &UI.buttons.scopeModePoints;
-    *btnModePoints = (SDL_FRect){
+    UI_ELEMENT *btnScopeModePoints = &UI.INTERACTIVE.Button.scopeModePoints;
+    btnScopeModePoints->ID = UI_BTN_SCOPE_MODE_POINTS;
+    btnScopeModePoints->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 2,
         .x = settingsFrameX,
-        .y = lastElementY };
+        .y = rowStartY };
     UI_TEXT textModePoints;
     if (state->SCOPE.mode == 0)
-        renderTitle(state, &textModePoints, "> Points <", *btnModePoints);
+        renderTitle(state, &textModePoints, "> Points <", btnScopeModePoints->rect);
     else
-        renderTitle(state, &textModePoints, "Points", *btnModePoints);
-    SDL_RenderRect(state->renderer, btnModePoints);
+        renderTitle(state, &textModePoints, "Points", btnScopeModePoints->rect);
+    SDL_RenderRect(state->renderer, &btnScopeModePoints->rect);
 
     // Scope Mode Lines
-    SDL_FRect *btnModeLines = &UI.buttons.scopeModeLines;
-    *btnModeLines = (SDL_FRect){
+    UI_ELEMENT *btnScopeModeLines = &UI.INTERACTIVE.Button.scopeModeLines;
+    btnScopeModeLines->ID = UI_BTN_SCOPE_MODE_LINES;
+    btnScopeModeLines->rect = (SDL_FRect){
         .h = ROW_ELEMENT_H,
         .w = settingsFrameW / 2,
-        .x = settingsFrameX + btnModePoints->w,
-        .y = lastElementY };
-    setLastElementY(btnModeLines, &lastElementY);
+        .x = settingsFrameX + btnScopeModePoints->rect.w,
+        .y = rowStartY };
+    setRowFrom(btnScopeModeLines->rect, &rowStartY);
     UI_TEXT textModeLines;
     if (state->SCOPE.mode == 1)
-        renderTitle(state, &textModeLines, "> Lines <", *btnModeLines);
+        renderTitle(state, &textModeLines, "> Lines <", btnScopeModeLines->rect);
     else
-        renderTitle(state, &textModeLines, "Lines", *btnModeLines);
-    SDL_RenderRect(state->renderer, btnModeLines);
+        renderTitle(state, &textModeLines, "Lines", btnScopeModeLines->rect);
+    SDL_RenderRect(state->renderer, &btnScopeModeLines->rect);
 }
 
-UI_BUTTONS getUIButtonEnum(float x, float y) {
-    if (isMouseInButton(x, y, UI.fields.wavFilePath))
-        return UI_FIELD_PATH;
-    if (isMouseInButton(x, y, UI.buttons.wavPlay))
-        return UI_BTN_PLAY;
-    if (isMouseInButton(x, y, UI.buttons.wavPause))
-        return UI_BTN_PAUSE;
-    if (isMouseInButton(x, y, UI.buttons.wavResume))
-        return UI_BTN_RESUME;
-    if (isMouseInButton(x, y, UI.buttons.wavVolume))
-        return UI_BTN_VOLUME;
-    if (isMouseInButton(x, y, UI.buttons.scopeScaleNeg))
-        return UI_BTN_SCOPE_SCALE_NEG;
-    if (isMouseInButton(x, y, UI.buttons.scopeScalePos))
-        return UI_BTN_SCOPE_SCALE_POS;
-    if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsNeg))
-        return UI_BTN_SCOPE_MAX_POINTS_NEG;
-    if (isMouseInButton(x, y, UI.buttons.scopeMaxPointsPos))
-        return UI_BTN_SCOPE_MAX_POINTS_POS;
-    if (isMouseInButton(x, y, UI.buttons.scopeModePoints))
-        return UI_BTN_SCOPE_MODE_POINTS;
-    if (isMouseInButton(x, y, UI.buttons.scopeModeLines))
-        return UI_BTN_SCOPE_MODE_LINES;
-    return UI_BTN_NONE;
-}
-
-SDL_FRect getUIButtonRect(UI_BUTTONS button) {
-    switch (button) {
-        case UI_FIELD_PATH:
-            return UI.fields.wavFilePath;
-        case UI_BTN_PLAY:
-            return UI.buttons.wavPlay;
-        case UI_BTN_PAUSE:
-            return UI.buttons.wavPause;
-        case UI_BTN_RESUME:
-            return UI.buttons.wavResume;
-        case UI_BTN_VOLUME:
-            return UI.buttons.wavVolume;
-        case UI_BTN_SCOPE_SCALE_NEG:
-            return UI.buttons.scopeScaleNeg;
-        case UI_BTN_SCOPE_SCALE_POS:
-            return UI.buttons.scopeScalePos;
-        case UI_BTN_SCOPE_MAX_POINTS_NEG:
-            return UI.buttons.scopeMaxPointsNeg;
-        case UI_BTN_SCOPE_MAX_POINTS_POS:
-            return UI.buttons.scopeMaxPointsPos;
-        case UI_BTN_SCOPE_MODE_POINTS:
-            return UI.buttons.scopeModePoints;
-        case UI_BTN_SCOPE_MODE_LINES:
-            return UI.buttons.scopeModeLines;
-        case UI_BTN_NONE:
-            break;
+UI_ELEMENT getUIElement(float x, float y) {
+    size_t elementsLen = sizeof(UI_INTERACTIVES) / sizeof(UI_INTERACTIVES[0]);
+    for (size_t i = 0; i < elementsLen; i++) {
+        UI_ELEMENT *element = UI_INTERACTIVES[i];
+        if (isMouseInButton(x, y, element->rect))
+            return *element;
     }
-    return (SDL_FRect) { 0 };
+    return (UI_ELEMENT) { .ID = UI_BTN_NONE, .rect = { 0 } };
 }

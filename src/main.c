@@ -107,9 +107,9 @@ static int appClose(appState *state) {
 }
 
 int main(void) {
-    /*************************
-    /      INIT & GUARDS     /
-    *************************/
+    /* ----------------- */
+    /*   INIT & GUARDS   */
+    /* ----------------- */
     _Bool isError;
     appState *state = (appState *)calloc(1, sizeof(appState));
     if (!state) {
@@ -123,9 +123,9 @@ int main(void) {
         return 0;
     }
 
-    /*************************
-    /          LOOP          /
-    *************************/
+    /* ------------- */
+    /*   MAIN LOOP   */
+    /* ------------- */
     _Bool running = 1;
     while (running) {
         // [Events Call]

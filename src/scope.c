@@ -82,9 +82,9 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
     }
     uint16_t sampleBytes = state->WAV.header.Format.bitsPerSample / 8;
 
-    /*************************
-    /     POINT BY WAV       /
-    *************************/
+    /* ---------------- */
+    /*   POINT BY WAV   */
+    /* ---------------- */
     for (size_t i = 0; i < wave->pointCount; i++) {
         size_t sampleFrame = (startFrame + i) % totalFrames;
         size_t sampleOffset = state->WAV.header.Data.dataStart + (sampleFrame * state->WAV.header.Format.bytesPerBlock);

@@ -93,9 +93,10 @@ int appEvents(appState *state, SDL_Event *event) {
             if (event->button.button == SDL_BUTTON_LEFT) {
                 float x, y;
                 SDL_GetMouseState(&x, &y);
-                UI_BUTTONS button = getUIButtonEnum(x, y);
-                SDL_FRect buttonRect = getUIButtonRect(button);
-                switch (button) {
+                UI_ELEMENT element = getUIElement(x, y);
+                UI_BUTTONS elementID = element.ID;
+                SDL_FRect elementRect = element.rect;
+                switch (elementID) {
                     case UI_BTN_PLAY: {
                         SDL_Log("play button clicked\n");
                         destroyAudio(state); // should make it return something in the future - as a check
@@ -122,7 +123,7 @@ int appEvents(appState *state, SDL_Event *event) {
                         resumeAudio(state);
                         break;
                     case UI_BTN_VOLUME: {
-                        if (buttonRect.w > 0.f) {
+                        if (elementRect.w > 0.f) {
                             /**
                              * [mouse x coord] - [rect x coord] = mouse's offset in x-axis from rect's x
                              * ([mouse x coord] - [rect x coord]) / [rect width] = percentage (0-1) of mouse x coord in rect's max x (width)
@@ -131,7 +132,7 @@ int appEvents(appState *state, SDL_Event *event) {
                              * gain is calculated on-the-fly here based on the mouse's position within the volume rect
                              * only then is UI rappresentation of gain calculated based on state->volumeGain
                             */
-                            float gain = (x - buttonRect.x) / buttonRect.w;
+                            float gain = (x - elementRect.x) / elementRect.w;
                             // clamps if for some reason < 0 || > 1
                             if (gain < 0.f) gain = 0.f;
                             if (gain > 1.f) gain = 1.f;
@@ -151,7 +152,7 @@ int appEvents(appState *state, SDL_Event *event) {
                         break;
                     case UI_BTN_SCOPE_SCALE_NEG:
                         SDL_Log("scope size neg button clicked\n");
-                        if (state->SCOPE.scale > 0)
+                        if (state->SCOPE.scale > 1)
                             state->SCOPE.scale -= 1;
                         break;
                     case UI_BTN_SCOPE_SCALE_POS:
@@ -199,8 +200,9 @@ int appEvents(appState *state, SDL_Event *event) {
             if (event->button.button == SDL_BUTTON_LEFT) {
                 float x, y;
                 SDL_GetMouseState(&x, &y);
-                UI_BUTTONS button = getUIButtonEnum(x, y);
-                switch (button) {
+                UI_ELEMENT element = getUIElement(x, y);
+                UI_BUTTONS elementID = element.ID;
+                switch (elementID) {
                     case UI_FIELD_PATH: {
                         SDL_Log("WAV filePath field clicked up\n");
                         isFieldPathActive = 1;
