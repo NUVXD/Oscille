@@ -5,6 +5,10 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "WAV.h"
 
+#define COLOR_GREEN 74,246,38,255
+#define COLOR_WHITE 255,255,255,255
+#define COLOR_BLACK 0,0,0,255
+#define _2PI (2 * SDL_PI_F)
 #define APP_WAV_PATH_MAX 401U
 
 typedef struct appStateText {

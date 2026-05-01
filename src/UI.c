@@ -1,17 +1,8 @@
+#include <string.h>
 #include "SDL3/SDL.h"
 #include "SDL3_ttf/SDL_ttf.h"
 #include "UI.h"
 #include "appstate.h"
-#include <string.h>
-
-/**
- * TODO :
- * - refactor to add UI-modularity functions to compact & reduce size
- */
-
-#define COLOR_GREEN 74,246,38,255
-#define COLOR_WHITE 255,255,255,255
-#define COLOR_BLACK 0,0,0,255
 
 /* --------------- */
 /*   UI ELEMENTS   */

@@ -7,9 +7,6 @@
 // TODO
 // - lower resolution of wave function as opposed to clamp/cap total points drawn <- big issue, ignoring for now
 
-#define _2PI (2 * SDL_PI_F)
-#define COLOR_GREEN 74,246,38,255
-
 static uint16_t read16Bit(const uint8_t *buffer) {
     uint16_t value = (buffer[0] | ((uint16_t)buffer[1] << 8));
     return value;
