@@ -11,10 +11,15 @@
 #define _2PI (2 * SDL_PI_F)
 #define APP_WAV_PATH_MAX 401U
 
+static enum {
+    FONT_MONOSPACE_NORMAL,
+    FONT_ENUMS_COUNT
+} FONTS;
+
 typedef struct appStateText {
     TTF_TextEngine *textEngine;
     TTF_Text *text;
-    TTF_Font *font;
+    TTF_Font *font[FONT_ENUMS_COUNT + 1];
 } appStateText;
 
 typedef struct appStateAudio {

@@ -190,7 +190,7 @@ int appEvents(appState *state, SDL_Event *event) {
                         SDL_Log("scope mode (lines) button clicked\n");
                         state->SCOPE.mode = 1;
                         break;
-                    case UI_BTN_MENU_FILE:
+                    case UI_BTN_MENU_OPENFILE:
                         SDL_Log("file menu button clicked\n");
                         SDL_ShowOpenFileDialog(openFileDialog, state, state->window, &FILTER_FORMAT, 1, (void *)0, 0);
                         break;
@@ -237,7 +237,7 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_SCOPE_MAX_POINTS_POS:
                     case UI_BTN_SCOPE_MODE_POINTS:
                     case UI_BTN_SCOPE_MODE_LINES:
-                    case UI_BTN_MENU_FILE:
+                    case UI_BTN_MENU_OPENFILE:
                     default:
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);
