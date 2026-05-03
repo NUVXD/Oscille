@@ -4,6 +4,18 @@
 
 Gonna add more documentation in the future.
 
+Supported Formats
+--
+
+These are the .wav formats (Bits Per Sample) that are supported for audio playback & visualization.
+
+|    Supported PCM Formats    |
+| --------------------------- |
+| Signed 16-Bit Little Endian |
+| Signed 32-Bit Little Endian |
+
+__[ ! ]__ Currently, any 8-Bit & 24-Bit formats remain unsupported.
+
 Dependencies
 --
 
