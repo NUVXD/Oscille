@@ -67,8 +67,7 @@ static void SDLCALL openFileDialog(void *userdata, const char *const *filelist, 
     (void)filter;
     appState *state = (appState *)userdata;
 
-    if (filelist && filelist[0])
-    {
+    if (filelist && filelist[0]) {
         pastePathText(state, filelist[0]);
         SDL_Log("%s\n", filelist[0]);
     }
@@ -102,98 +101,169 @@ int appEvents(appState *state, SDL_Event *event) {
             state->width = event->window.data1;
             state->height = event->window.data2;
             break;
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            float x, y;
+            SDL_GetMouseState(&x, &y);
+            // the bools are automatically zero-initialized @ startup
+            // so initially theyre set on the expanded state
+            // just because the sections were already set to be fully visible
+            // me thinks best
+            _Bool *isCmpctSectionWav = getUIBoolean(SETTINGS_IS_WAV_SECTION_COMPACT);
+            _Bool *isCmpctSectionScope = getUIBoolean(SETTINGS_IS_SCOPE_SECTION_COMPACT);
+            UI_ELEMENT element = getUIElement(x, y);
+            UI_BUTTONS elementID = element.ID;
+            SDL_FRect elementRect = element.rect;
+
             if (event->button.button == SDL_BUTTON_LEFT) {
-                float x, y;
-                SDL_GetMouseState(&x, &y);
-                UI_ELEMENT element = getUIElement(x, y);
-                UI_BUTTONS elementID = element.ID;
-                SDL_FRect elementRect = element.rect;
                 switch (elementID) {
-                    case UI_BTN_PLAY: {
-                        SDL_Log("play button clicked\n");
-                        destroyAudio(state); // should make it return something in the future - as a check
-                        freeWAV(&state->WAV.wavBuffer);
-                        _Bool isError = parseWAV(state->WAV.filePath, &state->WAV.header, &state->WAV.wavBuffer);
-                        if (isError) {
-                            SDL_Log("error with loading or parsing WAV file\n");
-                            if (state->WAV.wavBuffer) {
-                                free(state->WAV.wavBuffer);
-                                state->WAV.wavBuffer = (void *)0;
-                            }
-                            break;
+                    /* ----------- */
+                    /*   GENERAL   */
+                    /* ----------- */
+                    case UI_BTN_COMPACT_SECTION_WAV:
+                        SDL_Log("dropdown WAV section button clicked:");
+                        if (*isCmpctSectionWav) {
+                            *isCmpctSectionWav = 0;
+                            SDL_Log("set as expanded\n");
                         }
-                        initAudio(state);
-                        printDebugHeaderInfo(state);
+                        else {
+                            *isCmpctSectionWav = 1;
+                            isFieldPathActive = 0;
+                            SDL_Log("set as compact\n");
+                        }
+                        break;
+                    case UI_BTN_COMPACT_SECTION_SCOPE:
+                        SDL_Log("dropdown Scope section button clicked:");
+                        if (*isCmpctSectionScope) {
+                            *isCmpctSectionScope = 0;
+                            SDL_Log("set as expanded\n");
+                        }
+                        else {
+                            *isCmpctSectionScope = 1;
+                            SDL_Log("set as compact\n");
+                        }
+                        break;
+
+                        /* ------------------------ */
+                        /*   WAV SETTINGS SECTION   */
+                        /* ------------------------ */
+                    case UI_BTN_PLAY: {
+                        if (!*isCmpctSectionWav) {
+                            SDL_Log("play button clicked\n");
+                            destroyAudio(state); // should make it return something in the future - as a check
+                            freeWAV(&state->WAV.wavBuffer);
+                            _Bool isError = parseWAV(state->WAV.filePath, &state->WAV.header, &state->WAV.wavBuffer);
+                            if (isError) {
+                                SDL_Log("error with loading or parsing WAV file\n");
+                                if (state->WAV.wavBuffer) {
+                                    free(state->WAV.wavBuffer);
+                                    state->WAV.wavBuffer = (void *)0;
+                                }
+                                break;
+                            }
+                            initAudio(state);
+                            printDebugHeaderInfo(state);
+                        }
                         break;
                     }
                     case UI_BTN_PAUSE:
-                        SDL_Log("pause button clicked\n");
-                        pauseAudio(state);
+                        if (!*isCmpctSectionWav) {
+                            SDL_Log("pause button clicked\n");
+                            pauseAudio(state);
+                        }
                         break;
                     case UI_BTN_RESUME:
-                        SDL_Log("resume button clicked\n");
-                        resumeAudio(state);
+                        if (!*isCmpctSectionWav) {
+                            SDL_Log("resume button clicked\n");
+                            resumeAudio(state);
+                        }
                         break;
                     case UI_BTN_VOLUME: {
-                        if (elementRect.w > 0.f) {
-                            /**
-                             * [mouse x coord] - [rect x coord] = mouse's offset in x-axis from rect's x
-                             * ([mouse x coord] - [rect x coord]) / [rect width] = percentage (0-1) of mouse x coord in rect's max x (width)
-                             *
-                             * doesnt care about current UI rappresentation of gain;
-                             * gain is calculated on-the-fly here based on the mouse's position within the volume rect
-                             * only then is UI rappresentation of gain calculated based on state->volumeGain
-                            */
-                            float gain = (x - elementRect.x) / elementRect.w;
-                            // clamps if for some reason < 0 || > 1
-                            if (gain < 0.f) gain = 0.f;
-                            if (gain > 1.f) gain = 1.f;
-                            // QOL thresholds over which gain is intuitively set
-                            if (gain <= 0.05f) gain = 0.f;
-                            if (gain <= 0.525 && gain >= 0.475) gain = 0.5f;
-                            if (gain >= 0.95f) gain = 1.f;
-                            // UI will read from here
-                            state->AUDIO.volumeGain = gain;
-                            setGain(state, gain);
-                            SDL_Log("volume gain set to: %f\n", state->AUDIO.volumeGain);
+                        if (!*isCmpctSectionWav) {
+                            if (elementRect.w > 0.f) {
+                                /**
+                                 * [mouse x coord] - [rect x coord] = mouse's offset in x-axis from rect's x
+                                 * ([mouse x coord] - [rect x coord]) / [rect width] = percentage (0-1) of mouse x coord in rect's max x (width)
+                                 *
+                                 * doesnt care about current UI rappresentation of gain;
+                                 * gain is calculated on-the-fly here based on the mouse's position within the volume rect
+                                 * only then is UI rappresentation of gain calculated based on state->volumeGain
+                                */
+                                float gain = (x - elementRect.x) / elementRect.w;
+                                // clamps if for some reason < 0 || > 1
+                                if (gain < 0.f) gain = 0.f;
+                                if (gain > 1.f) gain = 1.f;
+                                // QOL thresholds over which gain is intuitively set
+                                if (gain <= 0.05f) gain = 0.f;
+                                if (gain <= 0.525 && gain >= 0.475) gain = 0.5f;
+                                if (gain >= 0.95f) gain = 1.f;
+                                // UI will read from here
+                                state->AUDIO.volumeGain = gain;
+                                setGain(state, gain);
+                                SDL_Log("volume gain set to: %f\n", state->AUDIO.volumeGain);
+                            }
                         }
                         break;
                     }
                     case UI_FIELD_PATH:
-                        isFieldPathActive = 1;
+                        if (!*isCmpctSectionWav) {
+                            isFieldPathActive = 1;
+                        }
                         break;
+
+                        /* -------------------------- */
+                        /*   SCOPE SETTINGS SECTION   */
+                        /* -------------------------- */
                     case UI_BTN_SCOPE_SCALE_NEG:
-                        SDL_Log("scope size neg button clicked\n");
-                        if (state->SCOPE.scale > 1)
-                            state->SCOPE.scale -= 1;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope size neg button clicked\n");
+                            if (state->SCOPE.scale > 1)
+                                state->SCOPE.scale -= 1;
+                        }
                         break;
                     case UI_BTN_SCOPE_SCALE_POS:
-                        SDL_Log("scope size pos button clicked\n");
-                        if (state->SCOPE.scale < 100)
-                            state->SCOPE.scale += 1;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope size pos button clicked\n");
+                            if (state->SCOPE.scale < 100)
+                                state->SCOPE.scale += 1;
+                        }
                         break;
                     case UI_BTN_SCOPE_MAX_POINTS_NEG:
-                        SDL_Log("scope max points neg button clicked\n");
-                        if (state->SCOPE.maxPoints > 1)
-                            state->SCOPE.maxPoints -= 1;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope max points neg button clicked\n");
+                            if (state->SCOPE.maxPoints > 1)
+                                state->SCOPE.maxPoints -= 1;
+                        }
                         break;
                     case UI_BTN_SCOPE_MAX_POINTS_POS:
-                        SDL_Log("scope max points pos button clicked\n");
-                        state->SCOPE.maxPoints += 1;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope max points pos button clicked\n");
+                            state->SCOPE.maxPoints += 1;
+                        }
                         break;
                     case UI_BTN_SCOPE_MODE_POINTS:
-                        SDL_Log("scope mode (points) button clicked\n");
-                        state->SCOPE.mode = 0;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope mode (points) button clicked\n");
+                            state->SCOPE.mode = 0;
+                        }
                         break;
                     case UI_BTN_SCOPE_MODE_LINES:
-                        SDL_Log("scope mode (lines) button clicked\n");
-                        state->SCOPE.mode = 1;
+                        if (!*isCmpctSectionScope) {
+                            SDL_Log("scope mode (lines) button clicked\n");
+                            state->SCOPE.mode = 1;
+                        }
                         break;
+
+                        /* --------------- */
+                        /*   TOPBAR MENU   */
+                        /* --------------- */
                     case UI_BTN_MENU_OPENFILE:
                         SDL_Log("file menu button clicked\n");
                         SDL_ShowOpenFileDialog(openFileDialog, state, state->window, &FILTER_FORMAT, 1, (void *)0, 0);
                         break;
+
+                        /* ------------ */
+                        /*   DEFAULTS   */
+                        /* ------------ */
                     case UI_BTN_NONE:
                     default:
                         isFieldPathActive = 0;
@@ -213,17 +283,22 @@ int appEvents(appState *state, SDL_Event *event) {
                 }
             }
             break;
+        }
         case SDL_EVENT_MOUSE_BUTTON_UP:
             if (event->button.button == SDL_BUTTON_LEFT) {
                 float x, y;
                 SDL_GetMouseState(&x, &y);
+                _Bool *isCmpctSectionWav = getUIBoolean(SETTINGS_IS_WAV_SECTION_COMPACT);
+                //_Bool *isCmpctSectionScope = getUIBoolean(SETTINGS_IS_SCOPE_SECTION_COMPACT);
                 UI_ELEMENT element = getUIElement(x, y);
                 UI_BUTTONS elementID = element.ID;
                 switch (elementID) {
                     case UI_FIELD_PATH: {
-                        SDL_Log("WAV filePath field clicked up\n");
-                        isFieldPathActive = 1;
-                        SDL_StartTextInput(state->window);
+                        if (!*isCmpctSectionWav) {
+                            SDL_Log("WAV filePath field clicked up\n");
+                            isFieldPathActive = 1;
+                            SDL_StartTextInput(state->window);
+                        }
                         break;
                     }
                     case UI_BTN_PLAY:
@@ -237,6 +312,8 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_SCOPE_MAX_POINTS_POS:
                     case UI_BTN_SCOPE_MODE_POINTS:
                     case UI_BTN_SCOPE_MODE_LINES:
+                    case UI_BTN_COMPACT_SECTION_WAV:
+                    case UI_BTN_COMPACT_SECTION_SCOPE:
                     case UI_BTN_MENU_OPENFILE:
                     default:
                         isFieldPathActive = 0;

@@ -16,8 +16,18 @@ typedef enum UI_BUTTONS {
     UI_BTN_SCOPE_MAX_POINTS_POS,
     UI_BTN_SCOPE_MODE_POINTS,
     UI_BTN_SCOPE_MODE_LINES,
+    UI_BTN_COMPACT_SECTION_WAV,
+    UI_BTN_COMPACT_SECTION_SCOPE,
     UI_BTN_MENU_OPENFILE
 } UI_BUTTONS;
+
+typedef enum UI_BOOL_ENUMS {
+    MENU_IS_HOVERING_COMPACT_FILE,
+    MENU_IS_HOVERING_EXPANDED_FILE,
+    SETTINGS_IS_WAV_SECTION_COMPACT,
+    SETTINGS_IS_SCOPE_SECTION_COMPACT,
+    UI_BOOL_COUNT
+} UI_BOOL_ENUMS;
 
 typedef struct UI_ELEMENT {
     UI_BUTTONS ID;
@@ -36,5 +46,6 @@ extern void updateScope(struct appState *state);
 extern void updateSettings(struct appState* state);
 extern void updateTopMenu(struct appState *state);
 extern UI_ELEMENT getUIElement(float x, float y);
+extern _Bool *getUIBoolean(UI_BOOL_ENUMS boolEnum);
 
 #endif

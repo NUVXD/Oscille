@@ -156,6 +156,7 @@ int main(void) {
         SDL_RenderPresent(state->renderer);
     }
 
+    SDL_Log("closing.\n");
     appClose(state);
     return 0;
 }
