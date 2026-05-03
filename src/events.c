@@ -110,6 +110,8 @@ int appEvents(appState *state, SDL_Event *event) {
             // me thinks best
             _Bool *isCmpctSectionWav = getUIBoolean(SETTINGS_IS_WAV_SECTION_COMPACT);
             _Bool *isCmpctSectionScope = getUIBoolean(SETTINGS_IS_SCOPE_SECTION_COMPACT);
+            _Bool *isScopeInvertedX = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_X);
+            _Bool *isScopeInvertedY = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_Y);
             UI_ELEMENT element = getUIElement(x, y);
             UI_BUTTONS elementID = element.ID;
             SDL_FRect elementRect = element.rect;
@@ -252,6 +254,22 @@ int appEvents(appState *state, SDL_Event *event) {
                             state->SCOPE.mode = 1;
                         }
                         break;
+                    case UI_BTN_SCOPE_INVERT_X:
+                        if (!*isCmpctSectionScope) {
+                            if (*isScopeInvertedX)
+                                *isScopeInvertedX = 0;
+                            else
+                                *isScopeInvertedX = 1;
+                        }
+                        break;
+                    case UI_BTN_SCOPE_INVERT_Y:
+                        if (!*isCmpctSectionScope) {
+                            if (*isScopeInvertedY)
+                                *isScopeInvertedY = 0;
+                            else
+                                *isScopeInvertedY = 1;
+                        }
+                        break;
 
                         /* --------------- */
                         /*   TOPBAR MENU   */
@@ -312,6 +330,8 @@ int appEvents(appState *state, SDL_Event *event) {
                     case UI_BTN_SCOPE_MAX_POINTS_POS:
                     case UI_BTN_SCOPE_MODE_POINTS:
                     case UI_BTN_SCOPE_MODE_LINES:
+                    case UI_BTN_SCOPE_INVERT_X:
+                    case UI_BTN_SCOPE_INVERT_Y:
                     case UI_BTN_COMPACT_SECTION_WAV:
                     case UI_BTN_COMPACT_SECTION_SCOPE:
                     case UI_BTN_MENU_OPENFILE:

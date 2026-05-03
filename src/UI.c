@@ -20,6 +20,7 @@ static struct {
             SDL_FRect scopeScale;
             SDL_FRect scopeMaxPoints;
             SDL_FRect scopeMode;
+            SDL_FRect scopeInvert;
         } Title;
         // DISPLAYS
         struct {
@@ -44,6 +45,8 @@ static struct {
             UI_ELEMENT compactSectionWav;
             UI_ELEMENT compactSectionScope;
             UI_ELEMENT menuOpenFile;
+            UI_ELEMENT scopeInvertX;
+            UI_ELEMENT scopeInvertY;
         } Button;
         // FIELDS
         struct {
@@ -67,7 +70,9 @@ static UI_ELEMENT *const UI_INTERACTIVES[] = {
     &UI.INTERACTIVE.Field.wavFilePath,
     &UI.INTERACTIVE.Button.compactSectionWav,
     &UI.INTERACTIVE.Button.compactSectionScope,
-    &UI.INTERACTIVE.Button.menuOpenFile
+    &UI.INTERACTIVE.Button.menuOpenFile,
+    &UI.INTERACTIVE.Button.scopeInvertX,
+    &UI.INTERACTIVE.Button.scopeInvertY
 };
 
 static _Bool UIBooleans[UI_BOOL_COUNT + 1];
@@ -336,6 +341,8 @@ static void drawSymbol(appState *state, UI_ELEMENT element) {
         case UI_BTN_SCOPE_MODE_LINES:
         case UI_FIELD_PATH:
         case UI_BTN_MENU_OPENFILE:
+        case UI_BTN_SCOPE_INVERT_X:
+        case UI_BTN_SCOPE_INVERT_Y:
         default: break;
     }
 }
@@ -480,6 +487,8 @@ void updateSettings(appState *state) {
     float settingsFrameX;
     _Bool *isCmpctSectionWav = &UIBooleans[SETTINGS_IS_WAV_SECTION_COMPACT];
     _Bool *isCmpctSectionScope = &UIBooleans[SETTINGS_IS_SCOPE_SECTION_COMPACT];
+    _Bool *isScopeInvertedX = &UIBooleans[SETTINGS_IS_SCOPE_INVERTED_X];
+    _Bool *isScopeInvertedY = &UIBooleans[SETTINGS_IS_SCOPE_INVERTED_Y];
 
     /* ----------------------- */
     /*   Main Settings Frame   */
@@ -506,7 +515,7 @@ void updateSettings(appState *state) {
     /*   WAV Settings Section Title   */
     SDL_FRect *ttlWavSettings = &UI.STATIC.Title.wavSettings;
     *ttlWavSettings = (SDL_FRect){
-        .h = ROW_TITLE_H,
+        .h = ROW_TITLE_H + 1.f,
         .w = settingsFrameW,
         .x = settingsFrameX,
         .y = rowStartY };
@@ -677,7 +686,7 @@ void updateSettings(appState *state) {
     /*   Scope Settings Section Title   */
     SDL_FRect *ttlScopeSettings = &UI.STATIC.Title.scopeSettings;
     *ttlScopeSettings = (SDL_FRect){
-        .h = ROW_TITLE_H,
+        .h = ROW_TITLE_H + 1.f,
         .w = settingsFrameW / 1,
         .x = settingsFrameX,
         .y = rowStartY };
@@ -860,6 +869,55 @@ void updateSettings(appState *state) {
         else
             renderTitle(state, &textModeLines, TTF_STYLE_NORMAL, "Lines", btnScopeModeLines->rect);
         SDL_RenderRect(state->renderer, &btnScopeModeLines->rect);
+
+        /* --------- */
+        /*   ROW 8   */
+        /* --------- */
+
+        /*   Scope Invert Axis Title   */
+        SDL_FRect *ttlScopeInvert = &UI.STATIC.Title.scopeInvert;
+        *ttlScopeInvert = (SDL_FRect){
+            .h = ROW_TITLE_H,
+            .w = settingsFrameW / 1,
+            .x = settingsFrameX,
+            .y = rowStartY };
+        setRowFrom(*ttlScopeInvert, &rowStartY);
+        UI_TEXT titleScopeInvert;
+        renderTitle(state, &titleScopeInvert, TTF_STYLE_NORMAL, "Invert Axis", *ttlScopeInvert);
+        SDL_RenderRect(state->renderer, ttlScopeInvert);
+
+        /*   Scope Invert X-Axis   */
+        UI_ELEMENT *btnScopeInvertX = &UI.INTERACTIVE.Button.scopeInvertX;
+        btnScopeInvertX->ID = UI_BTN_SCOPE_INVERT_X;
+        btnScopeInvertX->rect = (SDL_FRect){
+            .h = ROW_ELEMENT_H,
+            .w = settingsFrameW / 2,
+            .x = settingsFrameX,
+            .y = rowStartY };
+        UI_TEXT textInvertXAxis;
+        if (*isScopeInvertedX)
+            renderTitle(state, &textInvertXAxis, TTF_STYLE_NORMAL, "> X-Axis <", btnScopeInvertX->rect);
+        else
+            renderTitle(state, &textInvertXAxis, TTF_STYLE_NORMAL, "X-Axis", btnScopeInvertX->rect);
+        SDL_RenderRect(state->renderer, &btnScopeInvertX->rect);
+
+        /*   Scope Invert Y-Axis   */
+        UI_ELEMENT *btnScopeInvertY = &UI.INTERACTIVE.Button.scopeInvertY;
+        btnScopeInvertY->ID = UI_BTN_SCOPE_INVERT_Y;
+        btnScopeInvertY->rect = (SDL_FRect){
+            .h = ROW_ELEMENT_H,
+            .w = settingsFrameW / 2,
+            .x = settingsFrameX + btnScopeModePoints->rect.w,
+            .y = rowStartY };
+        setRowFrom(btnScopeInvertY->rect, &rowStartY);
+        UI_TEXT textInvertYAxis;
+        if (*isScopeInvertedY)
+            renderTitle(state, &textInvertYAxis, TTF_STYLE_NORMAL, "> Y-Axis <", btnScopeInvertY->rect);
+        else
+            renderTitle(state, &textInvertYAxis, TTF_STYLE_NORMAL, "Y-Axis", btnScopeInvertY->rect);
+        SDL_RenderRect(state->renderer, &btnScopeInvertY->rect);
+
+        //
     }
     else {
         clearUIElement(&UI.INTERACTIVE.Button.scopeScaleNeg);
@@ -868,5 +926,7 @@ void updateSettings(appState *state) {
         clearUIElement(&UI.INTERACTIVE.Button.scopeMaxPointsPos);
         clearUIElement(&UI.INTERACTIVE.Button.scopeModePoints);
         clearUIElement(&UI.INTERACTIVE.Button.scopeModeLines);
+        clearUIElement(&UI.INTERACTIVE.Button.scopeInvertX);
+        clearUIElement(&UI.INTERACTIVE.Button.scopeInvertY);
     }
 }

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <limits.h>
 #include "SDL3/SDL.h"
+#include "UI.h"
 #include "scope.h"
 #include "appstate.h"
 
@@ -53,9 +54,11 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
     if (state->SCOPE.scale <= 0) state->SCOPE.scale = 1;
     if (state->SCOPE.scale >= 100) state->SCOPE.scale = 100;
     int TRANSFORM = ((state->SCOPE.height / 2) * state->SCOPE.scale / 100);
+
     int maxScaleX = originX - 1;
     int maxScaleY = originY - 1;
     int maxScale = maxScaleY;
+
     if (maxScaleX < maxScaleY)
         maxScale = maxScaleX;
     if (maxScale < 1)
@@ -115,14 +118,25 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
                 return 1;
         }
 
-        float x = (float)originX + (leftAmp * (float)TRANSFORM);
-        float y = (float)originY + (rightAmp * (float)TRANSFORM);
+        float x;
+        // if x-inversion
+        if (*getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_X))
+            x = (float)originX - (leftAmp * (float)TRANSFORM);
+        else
+            x = (float)originX + (leftAmp * (float)TRANSFORM);
 
-        // keeps points inside scope and makes sure > 0
         if (x < 0.0f)
             x = 0.0f;
         else if (x > (float)(state->SCOPE.width - 1))
             x = (float)(state->SCOPE.width - 1);
+
+        float y;
+        // if y-inversion
+        if (*getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_Y))
+            y = (float)originY - (rightAmp * (float)TRANSFORM);
+        else
+            y = (float)originY + (rightAmp * (float)TRANSFORM);
+
         if (y < 0.0f)
             y = 0.0f;
         else if (y > (float)(state->SCOPE.height - 1))

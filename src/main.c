@@ -75,6 +75,7 @@ static int appInit(appState *state) {
     SDL_SetWindowMinimumSize(state->window, WINDOW_INIT_W, WINDOW_INIT_H);
     SDL_GetWindowSize(state->window, &state->width, &state->height);
     state->AUDIO.volumeGain = 0.25f;
+    state->SCOPE.mode = 0;
     state->SCOPE.scale = 90;
     state->SCOPE.maxPoints = 2048;
     return 0;
