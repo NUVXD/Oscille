@@ -2,9 +2,10 @@
 #define UI_H
 
 struct appState;
+struct SDL_FRect;
 
-typedef enum UI_BUTTONS {
-    UI_BTN_NONE,
+typedef enum UI_BUTTON_ENUMS {
+    UI_NONE,
     UI_FIELD_PATH,
     UI_BTN_PLAY,
     UI_BTN_PAUSE,
@@ -20,8 +21,10 @@ typedef enum UI_BUTTONS {
     UI_BTN_COMPACT_SECTION_SCOPE,
     UI_BTN_MENU_OPENFILE,
     UI_BTN_SCOPE_INVERT_X,
-    UI_BTN_SCOPE_INVERT_Y
-} UI_BUTTONS;
+    UI_BTN_SCOPE_INVERT_Y,
+
+    UI_BUTTON_COUNT
+} UI_BUTTON_ENUMS;
 
 typedef enum UI_BOOL_ENUMS {
     MENU_IS_HOVERING_COMPACT_FILE,
@@ -30,13 +33,14 @@ typedef enum UI_BOOL_ENUMS {
     SETTINGS_IS_SCOPE_SECTION_COMPACT,
     SETTINGS_IS_SCOPE_INVERTED_X,
     SETTINGS_IS_SCOPE_INVERTED_Y,
+
     UI_BOOL_COUNT
 } UI_BOOL_ENUMS;
 
 typedef struct UI_ELEMENT {
-    UI_BUTTONS ID;
+    UI_BUTTON_ENUMS ID;
     SDL_FRect rect;
-} UI_ELEMENT;
+} UI_ELEMENT, UI_BUTTON, UI_DISPLAY, UI_TITLE, UI_FIELD;
 
 typedef struct UI_TEXT {
     char *text;

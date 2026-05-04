@@ -113,11 +113,9 @@ int appEvents(appState *state, SDL_Event *event) {
             _Bool *isScopeInvertedX = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_X);
             _Bool *isScopeInvertedY = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_Y);
             UI_ELEMENT element = getUIElement(x, y);
-            UI_BUTTONS elementID = element.ID;
-            SDL_FRect elementRect = element.rect;
 
             if (event->button.button == SDL_BUTTON_LEFT) {
-                switch (elementID) {
+                switch (element.ID) {
                     /* ----------- */
                     /*   GENERAL   */
                     /* ----------- */
@@ -181,7 +179,7 @@ int appEvents(appState *state, SDL_Event *event) {
                         break;
                     case UI_BTN_VOLUME: {
                         if (!*isCmpctSectionWav) {
-                            if (elementRect.w > 0.f) {
+                            if (element.rect.w > 0.f) {
                                 /**
                                  * [mouse x coord] - [rect x coord] = mouse's offset in x-axis from rect's x
                                  * ([mouse x coord] - [rect x coord]) / [rect width] = percentage (0-1) of mouse x coord in rect's max x (width)
@@ -190,7 +188,7 @@ int appEvents(appState *state, SDL_Event *event) {
                                  * gain is calculated on-the-fly here based on the mouse's position within the volume rect
                                  * only then is UI rappresentation of gain calculated based on state->volumeGain
                                 */
-                                float gain = (x - elementRect.x) / elementRect.w;
+                                float gain = (x - element.rect.x) / element.rect.w;
                                 // clamps if for some reason < 0 || > 1
                                 if (gain < 0.f) gain = 0.f;
                                 if (gain > 1.f) gain = 1.f;
@@ -282,7 +280,8 @@ int appEvents(appState *state, SDL_Event *event) {
                         /* ------------ */
                         /*   DEFAULTS   */
                         /* ------------ */
-                    case UI_BTN_NONE:
+                    case UI_NONE:
+                    case UI_BUTTON_COUNT:
                     default:
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);
@@ -309,8 +308,7 @@ int appEvents(appState *state, SDL_Event *event) {
                 _Bool *isCmpctSectionWav = getUIBoolean(SETTINGS_IS_WAV_SECTION_COMPACT);
                 //_Bool *isCmpctSectionScope = getUIBoolean(SETTINGS_IS_SCOPE_SECTION_COMPACT);
                 UI_ELEMENT element = getUIElement(x, y);
-                UI_BUTTONS elementID = element.ID;
-                switch (elementID) {
+                switch (element.ID) {
                     case UI_FIELD_PATH: {
                         if (!*isCmpctSectionWav) {
                             SDL_Log("WAV filePath field clicked up\n");
@@ -319,11 +317,12 @@ int appEvents(appState *state, SDL_Event *event) {
                         }
                         break;
                     }
+                    case UI_NONE:
+                    case UI_BUTTON_COUNT:
                     case UI_BTN_PLAY:
                     case UI_BTN_PAUSE:
                     case UI_BTN_RESUME:
                     case UI_BTN_VOLUME:
-                    case UI_BTN_NONE:
                     case UI_BTN_SCOPE_SCALE_NEG:
                     case UI_BTN_SCOPE_SCALE_POS:
                     case UI_BTN_SCOPE_MAX_POINTS_NEG:
