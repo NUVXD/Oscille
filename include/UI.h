@@ -4,6 +4,20 @@
 struct appState;
 struct SDL_FRect;
 
+typedef enum UI_COLOR_ENUMS {
+    UI_COLOR_NULL,
+    UI_COLOR_WHITE,
+    UI_COLOR_RED,
+    UI_COLOR_ORANGE,
+    UI_COLOR_YELLOW,
+    UI_COLOR_GREEN,
+    UI_COLOR_BLUE,
+    UI_COLOR_PINK,
+    UI_COLOR_PURPLE,
+
+    UI_COLOR_COUNT
+} UI_COLOR_ENUMS;
+
 typedef enum UI_BUTTON_ENUMS {
     UI_NONE,
     UI_FIELD_PATH,
@@ -42,6 +56,11 @@ typedef struct UI_ELEMENT {
     SDL_FRect rect;
 } UI_ELEMENT, UI_BUTTON, UI_DISPLAY, UI_TITLE, UI_FIELD;
 
+typedef struct UI_COLOR {
+    UI_COLOR_ENUMS ID;
+    SDL_FRect rect;
+} UI_COLOR;
+
 typedef struct UI_TEXT {
     char *text;
     int w;
@@ -50,10 +69,13 @@ typedef struct UI_TEXT {
     float y;
 } UI_TEXT;
 
+extern SDL_Color InterfaceColor;
 extern void updateScope(struct appState *state);
 extern void updateSettings(struct appState* state);
 extern void updateTopMenu(struct appState *state);
 extern UI_ELEMENT getUIElement(float x, float y);
+extern SDL_Color getRGBColor(UI_COLOR_ENUMS RGB_colorEnum);
+extern UI_COLOR getUIColorBtn(float x, float y);
 extern _Bool *getUIBoolean(UI_BOOL_ENUMS boolEnum);
 
 #endif

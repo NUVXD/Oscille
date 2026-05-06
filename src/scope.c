@@ -8,13 +8,15 @@
 // TODO
 // - lower resolution of wave function as opposed to clamp/cap total points drawn <- big issue, ignoring for now
 
-static uint16_t read16Bit(const uint8_t *buffer) {
-    uint16_t value = (buffer[0] | ((uint16_t)buffer[1] << 8));
+static int16_t read16Bit(const uint8_t *buffer) {
+    int16_t value = (buffer[0] | ((int16_t)buffer[1] << 8));
+    return value;
+}
     return value;
 }
 
-static uint32_t read32Bit(const uint8_t *buffer) {
-    uint32_t value = (buffer[0] | ((uint32_t)buffer[1] << 8) | ((uint32_t)buffer[2] << 16) | ((uint32_t)buffer[3] << 24));
+static int32_t read32Bit(const uint8_t *buffer) {
+    int32_t value = (buffer[0] | ((int32_t)buffer[1] << 8) | ((int32_t)buffer[2] << 16) | ((int32_t)buffer[3] << 24));
     return value;
 }
 
@@ -48,11 +50,13 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
 
     // origins to center of scope canvas
     int originX = state->SCOPE.width / 2;  // canvas-width (x) center
-    int originY = state->SCOPE.height / 2; // canvas-height (y) center
+    int originY = (state->SCOPE.height / 2) + 25; // canvas-height (y) center
 
     // scale/transform inits & checks
-    if (state->SCOPE.scale <= 0) state->SCOPE.scale = 1;
-    if (state->SCOPE.scale >= 100) state->SCOPE.scale = 100;
+    if (state->SCOPE.scale <= 0)
+        state->SCOPE.scale = 1;
+    if (state->SCOPE.scale >= 100)
+        state->SCOPE.scale = 100;
     int TRANSFORM = ((state->SCOPE.height / 2) * state->SCOPE.scale / 100);
 
     int maxScaleX = originX - 1;
@@ -101,15 +105,15 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
 
         switch (state->WAV.header.Format.bitsPerSample) {
             case 16:
-                leftSample = (int16_t)read16Bit(&state->WAV.wavBuffer[sampleOffset]);
-                rightSample = (int16_t)read16Bit(&state->WAV.wavBuffer[sampleOffset + sampleBytes]);
+                leftSample = read16Bit(&state->WAV.wavBuffer[sampleOffset]);
+                rightSample = read16Bit(&state->WAV.wavBuffer[sampleOffset + sampleBytes]);
                 // normalizes 0-1 for SCALE
                 leftAmp = (float)leftSample / powf(2, 15);
                 rightAmp = (float)rightSample / powf(2, 15);
                 break;
             case 32:
-                leftSample = (int32_t)read32Bit(&state->WAV.wavBuffer[sampleOffset]);
-                rightSample = (int32_t)read32Bit(&state->WAV.wavBuffer[sampleOffset + sampleBytes]);
+                leftSample = read32Bit(&state->WAV.wavBuffer[sampleOffset]);
+                rightSample = read32Bit(&state->WAV.wavBuffer[sampleOffset + sampleBytes]);
                 // normalizes 0-1 for SCALE
                 leftAmp = (float)leftSample / powf(2, 31);
                 rightAmp = (float)rightSample / powf(2, 31);
@@ -166,7 +170,8 @@ int doWave(appState *state) {
     _Bool isError;
     Wave wave = { 0 };
 
-    SDL_SetRenderDrawColor(state->renderer, COLOR_GREEN);
+    SDL_Color color = getRGBColor(UI_COLOR_GREEN);
+    SDL_SetRenderDrawColor(state->renderer, color.r, color.g, color.b, 255);
 
     isError = initWave(state, &wave);
     if (isError) {

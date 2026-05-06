@@ -113,6 +113,8 @@ int appEvents(appState *state, SDL_Event *event) {
             _Bool *isScopeInvertedX = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_X);
             _Bool *isScopeInvertedY = getUIBoolean(SETTINGS_IS_SCOPE_INVERTED_Y);
             UI_ELEMENT element = getUIElement(x, y);
+            UI_COLOR colorBtn = getUIColorBtn(x, y);
+            SDL_Color colorRGB = getRGBColor(colorBtn.ID);
 
             if (event->button.button == SDL_BUTTON_LEFT) {
                 switch (element.ID) {
@@ -286,6 +288,11 @@ int appEvents(appState *state, SDL_Event *event) {
                         isFieldPathActive = 0;
                         SDL_StopTextInput(state->window);
                         break;
+                }
+
+                if (colorBtn.ID && ((InterfaceColor.r != colorRGB.r) || (InterfaceColor.g != colorRGB.g) || (InterfaceColor.b != colorRGB.b))) {
+                    SDL_Log("clicked color button %i (R%i, G%i, B%i)\n", colorBtn.ID, colorRGB.r, colorRGB.g, colorRGB.b);
+                    InterfaceColor = colorRGB;
                 }
             }
             else if (event->button.button == SDL_BUTTON_RIGHT) {
