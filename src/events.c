@@ -77,6 +77,7 @@ int appEvents(appState *state, SDL_Event *event) {
 
     switch (event->type) {
         case SDL_EVENT_QUIT:
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
             return 1;
         case SDL_EVENT_KEY_DOWN:
             if (event->key.key == SDLK_ESCAPE)
