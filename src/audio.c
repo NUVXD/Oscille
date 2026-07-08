@@ -1,4 +1,4 @@
-#include "SDL3/SDL.h"
+#include <stdlib.h>
 #include "appstate.h"
 
 void setGain(appState *state, float gain) {

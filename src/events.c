@@ -1,5 +1,5 @@
 #include <string.h>
-#include "SDL3/SDL.h"
+#include <stdlib.h>
 #include "WAV.h"
 #include "events.h"
 #include "appstate.h"

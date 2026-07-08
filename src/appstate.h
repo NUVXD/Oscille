@@ -8,9 +8,8 @@
 #define _2PI (2 * SDL_PI_F)
 #define APP_WAV_PATH_MAX 401U
 
-enum {
+typedef enum {
     FONT_MONOSPACE_NORMAL,
-    
     FONT_ENUMS_COUNT
 } FONTS;
 

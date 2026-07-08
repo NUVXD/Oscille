@@ -12,8 +12,6 @@ static int16_t read16Bit(const uint8_t *buffer) {
     int16_t value = (buffer[0] | ((int16_t)buffer[1] << 8));
     return value;
 }
-    return value;
-}
 
 static int32_t read32Bit(const uint8_t *buffer) {
     int32_t value = (buffer[0] | ((int32_t)buffer[1] << 8) | ((int32_t)buffer[2] << 16) | ((int32_t)buffer[3] << 24));
