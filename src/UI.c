@@ -109,8 +109,8 @@ static void renderTitle(appState *state, UI_TEXT *UI_Text, TTF_FontStyleFlags st
 
     TTF_SetTextString(state->TEXT.text, UI_Text->text, 0);
     TTF_GetTextSize(state->TEXT.text, &UI_Text->w, &UI_Text->h);
-    UI_Text->x = (rect.x + (rect.w / 2)) - (UI_Text->w / 2);
-    UI_Text->y = (rect.y + (rect.h / 2)) - (UI_Text->h / 2);
+    UI_Text->x = (rect.x + (rect.w / 2.f)) - ((float)UI_Text->w / 2.f);
+    UI_Text->y = (rect.y + (rect.h / 2.f)) - ((float)UI_Text->h / 2.f);
     // keeps them from overlapping on the left
     if (UI_Text->x < rect.x + 5.f)
         UI_Text->x = rect.x + 5.f;
@@ -440,7 +440,7 @@ void updateScope(appState *state) {
     int *scopeW = &state->SCOPE.width;
     // the 25s are because of menuFrameH, hardcoded j for now
     SDL_FRect scopeFrame = {
-        .w = (float)(state->width * 3 / 4),
+        .w = (float)state->width * 3.f / 4.f,
         .h = (float)(state->height - 25.f),
         .x = 0.f,
         .y = 25.f };

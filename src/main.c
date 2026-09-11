@@ -55,7 +55,7 @@ static int appInit(appState *state) {
         return 2;
     }
     // init & check fonts
-    state->TEXT.font[FONT_MONOSPACE_NORMAL] = TTF_OpenFont("../assets/monospace.ttf", 15);
+    state->TEXT.font[FONT_MONOSPACE_NORMAL] = TTF_OpenFont("assets/monospace.ttf", 15);
     if (!state->TEXT.font[FONT_MONOSPACE_NORMAL]) {
         SDL_Log("unable to load font: %s\n", SDL_GetError());
         return 2;

@@ -92,8 +92,8 @@ static _Bool loadWAV(const char *filePath, FILE **wavFile, HEADER *header, uint8
         return 1;
     }
     
-    isError = fopen_s(wavFile, filePath, "rb");
-    if (isError) {
+    *wavFile = fopen(filePath, "rb");
+    if (!*wavFile) {
         SDL_Log("unable to open WAV file\n");
         return 1;
     }

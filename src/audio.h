@@ -1,7 +1,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-struct appState;
+typedef struct appState appState;
 
 extern void setGain(struct appState *state, float gain);
 extern void initAudio(struct appState *state);

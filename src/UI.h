@@ -1,8 +1,11 @@
 #ifndef UI_H
 #define UI_H
 
-struct appState;
-struct SDL_FRect;
+#include <stdbool.h>
+#include "SDL3/SDL.h"
+
+typedef struct appState appState;
+typedef struct SDL_FRect SDL_FRect;
 
 typedef enum UI_COLOR_ENUMS {
     UI_COLOR_NULL,
