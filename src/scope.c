@@ -12,6 +12,11 @@ static int16_t read16Bit(const uint8_t *buffer) {
     int16_t value = (buffer[0] | ((int16_t)buffer[1] << 8));
     return value;
 }
+
+static int32_t read24Bit(const uint8_t *buffer) {
+    int32_t value = (int32_t)buffer[0] | ((int32_t)buffer[1] << 8) | ((int32_t)buffer[2] << 16);
+    if (value & 0x800000U)
+        value |= 0xFF000000U;
     return value;
 }
 
@@ -110,6 +115,13 @@ static _Bool calcWAVPoints(appState *state, Wave *wave) {
                 // normalizes 0-1 for SCALE
                 leftAmp = (float)leftSample / powf(2, 15);
                 rightAmp = (float)rightSample / powf(2, 15);
+                break;
+            case 24:
+                leftSample = read24Bit(&state->WAV.wavBuffer[sampleOffset]);
+                rightSample = read24Bit(&state->WAV.wavBuffer[sampleOffset + sampleBytes]);
+                // normalizes 0-1 for SCALE
+                leftAmp = (float)leftSample / powf(2, 23);
+                rightAmp = (float)rightSample / powf(2, 23);
                 break;
             case 32:
                 leftSample = read32Bit(&state->WAV.wavBuffer[sampleOffset]);

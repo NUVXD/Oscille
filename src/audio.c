@@ -12,6 +12,10 @@ void initAudio(appState *state) {
         case 16:
             state->AUDIO.audioSpec.format = SDL_AUDIO_S16;
             break;
+        case 24:
+            SDL_Log("24Bit file detected, forgive me\n");
+            state->AUDIO.audioSpec.format = SDL_AUDIO_S16;
+            break;
         case 32:
             state->AUDIO.audioSpec.format = SDL_AUDIO_S32;
             break;
